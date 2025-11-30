@@ -39,7 +39,7 @@ function InlineSkillEditor({ item, onDelete, onUpdate, count, onClick }: { item:
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'persons' | 'mehta' | 'exam'>('persons');
+  const [activeTab, setActiveTab] = useState<'persons' | 'mehta' | 'exam' | 'announcements'>('persons');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
   const [persons, setPersons] = useState<Person[]>([]);
@@ -698,13 +698,10 @@ export default function AdminPage() {
                       </motion.div>
                     )}
                     {displayed.length === 0 ? <div className="p-6 text-slate-500">هیچ رکوردی یافت نشد.</div> : (
-                      <div className="overflow-x-auto">
-                        <motion.table
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.1 }}
-                          className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
-                        >
+                    <div className="overflow-x-auto">
+                      <table
+                        className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
+                      >
                           <thead>
                             <tr className="text-left text-sm text-indigo-700 bg-gray-50">
                               <th className="p-2"><input type="checkbox" onChange={(e) => { const ids = displayed.map(d => d._id); const all = ids.every(id => selectedIds.has(id)); if (all) setSelectedIds(new Set()); else setSelectedIds(new Set(ids)); }} checked={displayed.length > 0 && displayed.every((d: any) => selectedIds.has(d._id))} /></th>
@@ -721,13 +718,10 @@ export default function AdminPage() {
                           </thead>
                           <tbody>
                             {displayed.map((p: any, i: number) => (
-                              <motion.tr
-                                key={p._id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                className="border-b"
-                              >
+                            <tr
+                              key={p._id}
+                              className="border-b"
+                            >
                                 <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
                                 <td className="p-2">{i + 1}</td>
                                 <td className="p-2">{p.firstName}</td>
@@ -765,10 +759,10 @@ export default function AdminPage() {
                                     <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deletePerson(p._id)}>حذف</button>
                                   </div>
                                 </td>
-                              </motion.tr>
+                              </tr>
                             ))}
                           </tbody>
-                        </motion.table>
+                        </table>
                       </div>
                     )}
                   </motion.div>
@@ -805,10 +799,7 @@ export default function AdminPage() {
                       </motion.div>
                     )}
                     <div className="overflow-x-auto">
-                      <motion.table
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.1 }}
+                      <table
                         className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
                       >
                         <thead>
@@ -828,11 +819,8 @@ export default function AdminPage() {
                         <tbody>
                           {examIntros.length === 0 && (<tr><td colSpan={10} className="p-6 text-center text-slate-500">هنوز معرفی به آزمون ثبت نشده است.</td></tr>)}
                           {examIntros.map((e: any, i: number) => (
-                            <motion.tr
+                            <tr
                               key={e._id}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.05 }}
                               className="border-b"
                             >
                               <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(e._id)} onChange={() => { setSelectedIds(prev => { const s = new Set(prev); if (s.has(e._id)) s.delete(e._id); else s.add(e._id); return s; }); }} /></td>
@@ -870,14 +858,23 @@ export default function AdminPage() {
                                 )}
                               </td>
                               <td className="p-2">
+
                                 <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deleteExamIntro(e._id)}>حذف</button>
+
                               </td>
-                            </motion.tr>
+
+                            </tr>
+
                           ))}
+
                         </tbody>
-                      </motion.table>
+
+                      </table>
+
                     </div>
+
                   </motion.div>
+
                 )}
 
                 {activeTab === 'mehta' && (
@@ -913,10 +910,7 @@ export default function AdminPage() {
                     )}
                     {persons.filter(p => p.isMehtaPlan).length === 0 ? <div className="p-6 text-slate-500">هیچ رکوردی یافت نشد.</div> : (
                       <div className="overflow-x-auto">
-                        <motion.table
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.1 }}
+                        <table
                           className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
                         >
                           <thead>
@@ -935,11 +929,8 @@ export default function AdminPage() {
                           </thead>
                           <tbody>
                             {persons.filter(p => p.isMehtaPlan).map((p: any, i: number) => (
-                              <motion.tr
+                              <tr
                                 key={p._id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
                                 className="border-b"
                               >
                                 <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
@@ -979,10 +970,10 @@ export default function AdminPage() {
                                     <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deletePerson(p._id)}>حذف</button>
                                   </div>
                                 </td>
-                              </motion.tr>
+                              </tr>
                             ))}
                           </tbody>
-                        </motion.table>
+                        </table>
                       </div>
                     )}
                   </motion.div>
