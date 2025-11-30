@@ -20,7 +20,7 @@ export async function POST(request) {
                     // اگر حجم بیشتر از 100KB بود، فشرده کن
                     if (photoBuffer.length > 102400) {
                         photoBuffer = await limit(async () => sharp(photoBuffer)
-                            .limitInputPixels(5000000)
+                            .limitInputPixels(50000000)
                             .jpeg({ quality: 50 })
                             .toBuffer());
                     }
