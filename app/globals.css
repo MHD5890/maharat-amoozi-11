@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* تعریف فونت فارسی وزیرمتن برای کل پروژه */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    direction: rtl;
+    font-family: 'Vazirmatn', sans-serif;
+    /* تغییر فونت به وزیر */
+    background: linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #7c3aed 100%);
+    min-height: 100vh;
+    padding: 1rem;
+    overflow-x: hidden;
+    @apply md:flex md:items-center md:justify-center md:p-6;
+  }
+}
+
+@layer components {
+
+  /* === استایل‌های فرم === */
+  .field {
+    @apply mb-1;
+    /* افزودن کمی فاصله پایین هر فیلد */
+  }
+
+  .label {
+    @apply block text-sm text-gray-700 mb-1.5;
+  }
+
+  .input,
+  .select {
+    @apply w-full border-2 border-gray-300 rounded-xl py-3 px-3.5 outline-none bg-white text-sm transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20;
+  }
+
+  .actions {
+    @apply mt-2 text-center;
+  }
+
+  .btn-primary {
+    @apply w-3/5 min-w-[220px] bg-indigo-600 text-white font-extrabold py-3 px-4 rounded-xl hover:bg-purple-700 transition-all duration-300 cursor-pointer animate-lift;
+  }
+
+  /* === استایل‌های جدول پنل مدیریت === */
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table th,
+  .table td {
+    @apply border border-indigo-200 p-3 text-center;
+  }
+
+  .table thead th {
+    @apply bg-indigo-100 text-indigo-800 font-extrabold;
+  }
+}
+
+/* === انیمیشن‌های اضافی === */
+@keyframes floatLabel {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes lift {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  100% {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(124, 58, 237, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.8);
+  }
+}
+
+.animate-float {
+  animation: floatLabel 3s ease-in-out infinite;
+}
+
+.animate-zoom {
+  animation: zoomIn 0.3s ease;
+}
+
+.animate-lift {
+  animation: lift 0.2s ease;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Primary gradient class */
+.primary-gradient {
+  background: linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #7c3aed 100%);
+}
+
+/* Icon color classes for consistency */
+.icon-primary {
+  color: #3b82f6;
+}
+
+/* blue-500 */
+.icon-success {
+  color: #10b981;
+}
+
+/* green-500 */
+.icon-search {
+  color: #8b5cf6;
+}
+
+/* purple-500 */
+.icon-upload {
+  color: #f59e0b;
+}
+
+/* amber-500 */
+.icon-danger {
+  color: #ef4444;
+}
+
+/* red-500 */
+.icon-accent {
+  color: #ec4899;
+}
+
+/* pink-500 */
+
+/* Enhanced sidebar gradient */
+.sidebar-gradient {
+  background: linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #7c3aed 100%);
+}
+
+/* Lively button hover */
+.btn-lively:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+}
