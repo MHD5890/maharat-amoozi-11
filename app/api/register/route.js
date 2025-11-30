@@ -18,7 +18,7 @@ export async function POST(request) {
                     const arrayBuffer = await file.arrayBuffer();
                     let photoBuffer = Buffer.from(arrayBuffer);
                     // اگر حجم بیشتر از 100KB بود، فشرده کن
-                    if (photoBuffer.length > 1024000) {
+                    if (photoBuffer.length > 204800) {
                         photoBuffer = await limit(async () => sharp(photoBuffer)
                             .limitInputPixels(50000000)
                             .jpeg({ quality: 50 })

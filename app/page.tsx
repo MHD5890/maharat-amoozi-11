@@ -538,7 +538,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                     <label className="label flex items-center gap-2">
                       <Upload className="w-4 h-4 text-orange-500" />
                       عکس پرسنلی(جهت صدور گواهی )
-                      توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید .(زیر100 کیلوبایت) اندازه عکس باید 4*3 باشد.
+                      توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید .(زیر200 کیلوبایت) اندازه عکس باید 4*3 باشد.
                     </label>
                     {isEditMode && (initialData as any)?.hasPhoto && !deletePhoto && !formData.photo && (
                       <div className="mb-2">
