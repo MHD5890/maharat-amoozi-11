@@ -29,6 +29,7 @@ const serviceLocations = [
   { value: "8", numeric: "8", detailed: "تیپ تکاور صاحب الزمان سیرجان" },
   { value: "9", numeric: "9", detailed: "گروه موشکی و توپخانه 65 صاعقه رفسنجان" },
   { value: "10", numeric: "10", detailed: "گروه امام حسین" },
+  { value: "11", numeric: "11", detailed: "سایر" },
 ];
 
 // === اینترفیس‌ها ===
