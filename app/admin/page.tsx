@@ -64,6 +64,7 @@ export default function AdminPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<string | null>(null);
+  const [selectedMehtaSkillFilter, setSelectedMehtaSkillFilter] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingZip, setExportingZip] = useState(false);
@@ -74,6 +75,7 @@ export default function AdminPage() {
   const [lastLoginTime, setLastLoginTime] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const filteredMehtaPersons = useMemo(() => persons.filter(p => p.isMehtaPlan && (!selectedMehtaSkillFilter || p.skillField === selectedMehtaSkillFilter)), [persons, selectedMehtaSkillFilter]);
 
   // auth guard
   useEffect(() => {
@@ -528,8 +530,8 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary-gradient p-8">
-      <div className="max-w-screen-2xl mx-auto bg-white rounded-3xl p-6 shadow-2xl ring-4 ring-white/20">
+    <div className="min-h-screen bg-primary-gradient p-4 md:p-8">
+      <div className="max-w-screen-2xl mx-auto bg-white rounded-3xl p-4 md:p-6 shadow-2xl ring-4 ring-white/20">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -698,10 +700,10 @@ export default function AdminPage() {
                       </motion.div>
                     )}
                     {displayed.length === 0 ? <div className="p-6 text-slate-500">هیچ رکوردی یافت نشد.</div> : (
-                    <div className="overflow-x-auto">
-                      <table
-                        className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
-                      >
+                      <div className="overflow-x-auto">
+                        <table
+                          className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
+                        >
                           <thead>
                             <tr className="text-left text-sm text-indigo-700 bg-gray-50">
                               <th className="p-2"><input type="checkbox" onChange={(e) => { const ids = displayed.map(d => d._id); const all = ids.every(id => selectedIds.has(id)); if (all) setSelectedIds(new Set()); else setSelectedIds(new Set(ids)); }} checked={displayed.length > 0 && displayed.every((d: any) => selectedIds.has(d._id))} /></th>
@@ -718,10 +720,10 @@ export default function AdminPage() {
                           </thead>
                           <tbody>
                             {displayed.map((p: any, i: number) => (
-                            <tr
-                              key={p._id}
-                              className="border-b"
-                            >
+                              <tr
+                                key={p._id}
+                                className="border-b"
+                              >
                                 <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
                                 <td className="p-2">{i + 1}</td>
                                 <td className="p-2">{p.firstName}</td>
@@ -885,7 +887,13 @@ export default function AdminPage() {
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="text-sm text-slate-700 mb-2">تعداد کل: <strong>{persons.filter(p => p.isMehtaPlan).length}</strong></div>
+                    {selectedMehtaSkillFilter && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm text-slate-600">فیلتر: {selectedMehtaSkillFilter}</span>
+                        <button className="text-sm text-red-500" onClick={() => setSelectedMehtaSkillFilter(null)}>پاک کردن</button>
+                      </div>
+                    )}
+                    <div className="text-sm text-slate-700 mb-2">تعداد کل: <strong>{filteredMehtaPersons.length}</strong></div>
                     <motion.button
                       className="bg-emerald-500 text-white px-4 py-2 rounded-md flex items-center gap-2 mb-4"
                       onClick={() => exportExcel(undefined, 'mehta')}
@@ -908,14 +916,14 @@ export default function AdminPage() {
                         </motion.button>
                       </motion.div>
                     )}
-                    {persons.filter(p => p.isMehtaPlan).length === 0 ? <div className="p-6 text-slate-500">هیچ رکوردی یافت نشد.</div> : (
+                    {filteredMehtaPersons.length === 0 ? <div className="p-6 text-slate-500">هیچ رکوردی یافت نشد.</div> : (
                       <div className="overflow-x-auto">
                         <table
                           className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
                         >
                           <thead>
                             <tr className="text-left text-sm text-indigo-700 bg-gray-50">
-                              <th className="p-2"><input type="checkbox" onChange={(e) => { const ids = persons.filter(p => p.isMehtaPlan).map(d => d._id); const all = ids.every(id => selectedIds.has(id)); if (all) setSelectedIds(new Set()); else setSelectedIds(new Set(ids)); }} checked={persons.filter(p => p.isMehtaPlan).length > 0 && persons.filter(p => p.isMehtaPlan).every((d: any) => selectedIds.has(d._id))} /></th>
+                              <th className="p-2"><input type="checkbox" onChange={(e) => { const ids = filteredMehtaPersons.map(d => d._id); const all = ids.every(id => selectedIds.has(id)); if (all) setSelectedIds(new Set()); else setSelectedIds(new Set(ids)); }} checked={filteredMehtaPersons.length > 0 && filteredMehtaPersons.every((d: any) => selectedIds.has(d._id))} /></th>
                               <th className="p-2">ردیف</th>
                               <th className="p-2">نام</th>
                               <th className="p-2 hidden sm:table-cell">نام خانوادگی</th>
@@ -928,7 +936,7 @@ export default function AdminPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {persons.filter(p => p.isMehtaPlan).map((p: any, i: number) => (
+                            {filteredMehtaPersons.map((p: any, i: number) => (
                               <tr
                                 key={p._id}
                                 className="border-b"
@@ -976,13 +984,14 @@ export default function AdminPage() {
                         </table>
                       </div>
                     )}
+
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           </div>
 
-          <div className="w-1/3">
+          <div className="w-full lg:w-1/3">
             <div className="bg-white rounded-md p-4">
               <div className="flex gap-3 items-center mb-3">
                 <motion.button
@@ -1142,7 +1151,7 @@ export default function AdminPage() {
                                 transition={{ delay: index * 0.1 }}
                                 className="flex items-center justify-between p-2 border rounded-md"
                               >
-                                <InlineSkillEditor item={s} onDelete={() => deleteMehtaSkill(s._id)} onUpdate={(newName) => updateMehtaSkill(s._id, newName)} count={persons.filter(p => p.isMehtaPlan && p.skillField === s.skill).length} onClick={() => { }} />
+                                <InlineSkillEditor item={s} onDelete={() => deleteMehtaSkill(s._id)} onUpdate={(newName) => updateMehtaSkill(s._id, newName)} count={persons.filter(p => p.isMehtaPlan && p.skillField === s.skill).length} onClick={() => { setSelectedMehtaSkillFilter(selectedMehtaSkillFilter === s.skill ? null : s.skill); setActiveTab('mehta'); }} />
                               </motion.div>
                             ))}
                           </motion.div>

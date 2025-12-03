@@ -38,7 +38,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen primary-gradient p-6 animate-fade-in" style={{ direction: 'rtl' }}>
+        <div className="min-h-screen primary-gradient p-4 md:p-6 animate-fade-in" style={{ direction: 'rtl' }}>
             <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl glass animate-zoom">
                 <h1 className="text-2xl font-bold text-center mb-6 text-white flex items-center justify-center gap-2"><Shield className="w-6 h-6 text-purple-400" />ورود به پنل مدیریت</h1>
                 <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">

@@ -338,14 +338,14 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-5xl bg-white rounded-3xl p-4 md:p-6 shadow-2xl"
+      className="w-full max-w-5xl mx-auto bg-white rounded-3xl p-4 md:p-6 shadow-2xl"
       transition={{ duration: 0.5 }}
     >
       {/* tabs for register / exam-intro / tracking */}
       <div className="mb-6 text-center">
-        <div className="inline-flex rounded-md bg-gray-100 p-1">
+        <div className="flex flex-col sm:flex-row rounded-md bg-gray-100 p-1 gap-1 sm:gap-0">
           <motion.button
-            className={`px-6 py-3 rounded-md text-lg font-semibold flex items-center gap-2 ${activeFormTab === 'register' ? 'bg-white shadow' : ''}`}
+            className={`px-4 sm:px-6 py-3 rounded-md text-base sm:text-lg font-semibold flex items-center justify-center gap-2 w-full sm:w-auto ${activeFormTab === 'register' ? 'bg-white shadow' : ''}`}
             onClick={() => setActiveFormTab('register')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -354,7 +354,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
             ثبت نام
           </motion.button>
           <motion.button
-            className={`px-6 py-3 rounded-md text-lg font-semibold flex items-center gap-2 ${activeFormTab === 'exam' ? 'bg-white shadow' : ''}`}
+            className={`px-4 sm:px-6 py-3 rounded-md text-base sm:text-lg font-semibold flex items-center justify-center gap-2 w-full sm:w-auto ${activeFormTab === 'exam' ? 'bg-white shadow' : ''}`}
             onClick={() => setActiveFormTab('exam')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -363,7 +363,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
             معرفی به آزمون مجدد
           </motion.button>
           <motion.button
-            className={`px-6 py-3 rounded-md text-lg font-semibold flex items-center gap-2 ${activeFormTab === 'tracking' ? 'bg-white shadow' : ''}`}
+            className={`px-4 sm:px-6 py-3 rounded-md text-base sm:text-lg font-semibold flex items-center justify-center gap-2 w-full sm:w-auto ${activeFormTab === 'tracking' ? 'bg-white shadow' : ''}`}
             onClick={() => setActiveFormTab('tracking')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -372,7 +372,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
             پیگیری تاریخ آزمون
           </motion.button>
           <motion.button
-            className={`px-6 py-3 rounded-md text-lg font-semibold flex items-center gap-2 ${activeFormTab === 'guidelines' ? 'bg-white shadow' : ''}`}
+            className={`px-4 sm:px-6 py-3 rounded-md text-base sm:text-lg font-semibold flex items-center justify-center gap-2 w-full sm:w-auto ${activeFormTab === 'guidelines' ? 'bg-white shadow' : ''}`}
             onClick={() => setActiveFormTab('guidelines')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -382,7 +382,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
           </motion.button>
         </div>
       </div>
-      <div className="flex flex-col lg:grid lg:grid-cols-[0.8fr_1.2fr] gap-x-8">
+      <div className="flex flex-col lg:grid lg:grid-cols-[0.8fr_1.2fr] gap-x-8 gap-y-6">
         {/* سایدبار */}
         <div className="primary-gradient text-white rounded-2xl p-4 md:p-7 flex flex-col justify-center text-center lg:h-full animate-float">
           <h1 className="text-xl md:text-2xl font-extrabold mb-2.5">{isEditMode ? 'ویرایش اطلاعات' : 'سامانه مهارت آموزی'}</h1>
@@ -538,7 +538,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                     <label className="label flex items-center gap-2">
                       <Upload className="w-4 h-4 text-orange-500" />
                       عکس پرسنلی(جهت صدور گواهی )
-                      توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید .(زیر200 کیلوبایت) اندازه عکس باید 4*3 باشد.
+                      توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید .(زیر300 کیلوبایت) اندازه عکس باید 4*3 باشد.
                     </label>
                     {isEditMode && (initialData as any)?.hasPhoto && !deletePhoto && !formData.photo && (
                       <div className="mb-2">
@@ -660,7 +660,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
 
                 <div className="space-y-6">
 
-                  <div className="bg-blue-50 border border-blue-300 text-blue-800 p-6 rounded-lg">
+                  <div className="bg-blue-50 border border-blue-300 text-blue-800 p-4 md:p-6 rounded-lg">
 
                     <h3 className="font-bold text-lg mb-4">راهنمایی ثبت نام</h3>
 
@@ -678,7 +678,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
 
                   </div>
 
-                  <div className="bg-green-50 border border-green-300 text-green-800 p-6 rounded-lg">
+                  <div className="bg-green-50 border border-green-300 text-green-800 p-4 md:p-6 rounded-lg">
 
                     <h3 className="font-bold text-lg mb-4">راهنمایی معرفی به آزمون</h3>
 
@@ -687,8 +687,6 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                       <li>وارد لینک پرداخت شوید و اعتبار را خریداری کنید.</li>
 
                       <li>پرداخت را انجام دهید.</li>
-
-                      <li>به مدیر گروه اطلاع دهید.</li>
 
                     </ol>
 
@@ -787,7 +785,7 @@ const ExamIntroForm = ({ onNavigate }: { onNavigate: (page: 'register' | 'admin'
 
   return (
     <div>
-      <div className="bg-blue-50 border border-blue-300 text-blue-800 p-6 rounded-lg mb-6 text-right leading-relaxed">
+      <div className="bg-blue-50 border border-blue-300 text-blue-800 p-4 md:p-6 rounded-lg mb-6 text-right leading-relaxed">
         <h3 className="font-bold text-lg mb-4 text-center">دستورالعمل معرفی به آزمون مجدد</h3>
         <ol className="list-decimal list-inside space-y-3">
           <li>ابتدا وارد لینک زیر شوید و اطلاعات خواسته شده را به دقت پر کنید. سپس قسمت اعتبار بار دوم معرفی به آزمون کتبی که به مبلغ ۲۰۰ هزار تومان است را به اندازه یک تعداد انتخاب کنید و گزینه ذخیره را بزنید.<br />
