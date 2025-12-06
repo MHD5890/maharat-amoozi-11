@@ -11,6 +11,8 @@ const ExamIntroSchema = new mongoose.Schema({
     registrationDate: { type: String },
     status: { type: String, default: 'معرفی نشده' },
     examDate: { type: String },
+    examCost: { type: Number, default: 0 },
+    paid: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.models.ExamIntro || mongoose.model('ExamIntro', ExamIntroSchema, 'examinro');

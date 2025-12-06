@@ -1,4 +1,4 @@
- import dbConnect from '@/lib/dbConnect';
+import dbConnect from '@/lib/dbConnect';
 import ExamIntro from '@/models/ExamIntro';
 import { NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/checkAdmin';
@@ -27,9 +27,13 @@ export async function PUT(request, { params }) {
         const body = await request.formData();
         const status = body.get('status');
         const examDate = body.get('examDate');
+        const examCost = body.get('examCost');
+        const paid = body.get('paid');
         const updateData = {};
         if (status !== null) updateData.status = status;
         if (examDate !== null) updateData.examDate = examDate;
+        if (examCost !== null) updateData.examCost = parseFloat(examCost);
+        if (paid !== null) updateData.paid = paid === 'true';
         const item = await ExamIntro.findByIdAndUpdate(params.id, updateData, { new: true });
         if (!item) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
         return NextResponse.json({ success: true, data: item });

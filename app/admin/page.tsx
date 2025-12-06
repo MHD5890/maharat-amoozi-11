@@ -417,6 +417,46 @@ export default function AdminPage() {
     }
   };
 
+  const updateExamIntroCost = async (id: string, examCost: number) => {
+    try {
+      const adminPass = sessionStorage.getItem('admin_pass') || '';
+      const body = new URLSearchParams({ examCost: examCost.toString() });
+      const res = await fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, {
+        method: 'PUT',
+        body
+      });
+      const resBody = await res.json().catch(() => ({}));
+      if (res.ok && resBody.success) {
+        setExamIntros(prev => prev.map(e => e._id === id ? { ...e, examCost } : e));
+        setStatusMessage('هزینه آزمون بروزرسانی شد');
+      } else {
+        setStatusMessage(resBody.message || `خطا (${res.status})`);
+      }
+    } catch (e: any) {
+      setStatusMessage(e?.message || 'خطا در بروزرسانی هزینه آزمون');
+    }
+  };
+
+  const updateExamIntroPaid = async (id: string, paid: boolean) => {
+    try {
+      const adminPass = sessionStorage.getItem('admin_pass') || '';
+      const body = new URLSearchParams({ paid: paid.toString() });
+      const res = await fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, {
+        method: 'PUT',
+        body
+      });
+      const resBody = await res.json().catch(() => ({}));
+      if (res.ok && resBody.success) {
+        setExamIntros(prev => prev.map(e => e._id === id ? { ...e, paid } : e));
+        setStatusMessage('وضعیت پرداخت بروزرسانی شد');
+      } else {
+        setStatusMessage(resBody.message || `خطا (${res.status})`);
+      }
+    } catch (e: any) {
+      setStatusMessage(e?.message || 'خطا در بروزرسانی وضعیت پرداخت');
+    }
+  };
+
   const deleteExamIntro = async (id: string) => {
     if (!confirm('آیا مطمئن هستید؟')) return;
     try {
@@ -700,72 +740,75 @@ export default function AdminPage() {
                       </motion.div>
                     )}
                     {displayed.length === 0 ? <div className="p-6 text-slate-500">هیچ رکوردی یافت نشد.</div> : (
-                      <div className="overflow-x-auto">
-                        <table
-                          className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
-                        >
-                          <thead>
-                            <tr className="text-left text-sm text-indigo-700 bg-gray-50">
-                              <th className="p-2"><input type="checkbox" onChange={(e) => { const ids = displayed.map(d => d._id); const all = ids.every(id => selectedIds.has(id)); if (all) setSelectedIds(new Set()); else setSelectedIds(new Set(ids)); }} checked={displayed.length > 0 && displayed.every((d: any) => selectedIds.has(d._id))} /></th>
-                              <th className="p-2">ردیف</th>
-                              <th className="p-2">نام</th>
-                              <th className="p-2 hidden sm:table-cell">نام خانوادگی</th>
-                              <th className="p-2">کد ملی</th>
-                              <th className="p-2">شماره تماس</th>
-                              <th className="p-2 hidden md:table-cell">رشته</th>
-                              <th className="p-2">وضعیت</th>
-                              <th className="p-2">عکس</th>
-                              <th className="p-2">عملیات</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {displayed.map((p: any, i: number) => (
-                              <tr
-                                key={p._id}
-                                className="border-b"
-                              >
-                                <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
-                                <td className="p-2">{i + 1}</td>
-                                <td className="p-2">{p.firstName}</td>
-                                <td className="p-2 hidden sm:table-cell">{p.lastName}</td>
-                                <td className="p-2">{p.nationalId}</td>
-                                <td className="p-2">{p.phone}</td>
-                                <td className="p-2 hidden md:table-cell">{p.skillField}</td>
-                                <td className="p-2">
-                                  <select value={p.status || 'در انتظار تایید'} onChange={(e) => updatePersonStatus(p._id, e.target.value)} className="px-2 py-1 border rounded-md text-sm">
-                                    <option value="در انتظار تایید">در انتظار تایید</option>
-                                    <option value="ثبت نام شده">ثبت نام شده</option>
-                                    <option value="معرفی به آزمون شده">معرفی به آزمون شده</option>
-                                  </select>
-                                  {p.status === 'معرفی به آزمون شده' && (
-                                    <div className="mt-1 grid grid-cols-3 gap-1">
-                                      <select value={p.examDate ? p.examDate.split('/')[0] : ''} onChange={(ev) => updatePersonExamDate(p._id, `${ev.target.value}/${p.examDate ? p.examDate.split('/')[1] : ''}/${p.examDate ? p.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
-                                        <option value="">سال</option>
-                                        {Array.from({ length: 5 }, (_, i) => 1400 + i).map(y => <option key={y} value={y}>{y}</option>)}
-                                      </select>
-                                      <select value={p.examDate ? p.examDate.split('/')[1] : ''} onChange={(ev) => updatePersonExamDate(p._id, `${p.examDate ? p.examDate.split('/')[0] : ''}/${ev.target.value}/${p.examDate ? p.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
-                                        <option value="">ماه</option>
-                                        {["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(m => <option key={m} value={m}>{m}</option>)}
-                                      </select>
-                                      <select value={p.examDate ? p.examDate.split('/')[2] : ''} onChange={(ev) => updatePersonExamDate(p._id, `${p.examDate ? p.examDate.split('/')[0] : ''}/${p.examDate ? p.examDate.split('/')[1] : ''}/${ev.target.value}`)} className="px-1 py-1 border rounded text-xs">
-                                        <option value="">روز</option>
-                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d).padStart(2, '0')}>{String(d).padStart(2, '0')}</option>)}
-                                      </select>
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="p-2 text-center">{p.hasPhoto ? <img src={`/api/persons/${p._id}?photo=true&pass=${encodeURIComponent(sessionStorage.getItem('admin_pass') || '')}&t=${Date.now()}`} alt="عکس" className="w-6 h-6 object-cover rounded mx-auto cursor-pointer" onClick={() => setSelectedPhoto(`/api/persons/${p._id}?photo=true&pass=${encodeURIComponent(sessionStorage.getItem('admin_pass') || '')}&t=${Date.now()}`)} /> : ''}</td>
-                                <td className="p-2">
-                                  <div className="flex items-center gap-2">
-                                    <a href={`/?editId=${p._id}`} className="bg-sky-500 text-white px-3 py-1 rounded-full">ویرایش</a>
-                                    <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deletePerson(p._id)}>حذف</button>
-                                  </div>
-                                </td>
+                      <>
+                        <div className="overflow-x-auto">
+                          <table
+                            className="w-full text-sm border-collapse bg-white shadow-lg ring-1 ring-gray-200 min-w-[600px]"
+                          >
+                            <thead>
+                              <tr className="text-left text-sm text-indigo-700 bg-gray-50">
+                                <th className="p-2"><input type="checkbox" onChange={(e) => { const ids = displayed.map(d => d._id); const all = ids.every(id => selectedIds.has(id)); if (all) setSelectedIds(new Set()); else setSelectedIds(new Set(ids)); }} checked={displayed.length > 0 && displayed.every((d: any) => selectedIds.has(d._id))} /></th>
+                                <th className="p-2">ردیف</th>
+                                <th className="p-2">نام</th>
+                                <th className="p-2 hidden sm:table-cell">نام خانوادگی</th>
+                                <th className="p-2">کد ملی</th>
+                                <th className="p-2">شماره تماس</th>
+                                <th className="p-2 hidden md:table-cell">رشته</th>
+                                <th className="p-2">وضعیت</th>
+                                <th className="p-2">عکس</th>
+                                <th className="p-2">عملیات</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {displayed.map((p: any, i: number) => (
+                                <tr
+                                  key={p._id}
+                                  className="border-b"
+                                >
+                                  <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(p._id)} onChange={() => toggleSelect(p._id)} /></td>
+                                  <td className="p-2">{i + 1}</td>
+                                  <td className="p-2">{p.firstName}</td>
+                                  <td className="p-2 hidden sm:table-cell">{p.lastName}</td>
+                                  <td className="p-2">{p.nationalId}</td>
+                                  <td className="p-2">{p.phone}</td>
+                                  <td className="p-2 hidden md:table-cell">{p.skillField}</td>
+                                  <td className="p-2">
+                                    <select value={p.status || 'در انتظار تایید'} onChange={(e) => updatePersonStatus(p._id, e.target.value)} className="px-2 py-1 border rounded-md text-sm">
+                                      <option value="در انتظار تایید">در انتظار تایید</option>
+                                      <option value="تایید">تایید</option>
+                                      <option value="ثبت نام شده">ثبت نام شده</option>
+                                      <option value="معرفی به آزمون شده">معرفی به آزمون شده</option>
+                                    </select>
+                                    {p.status === 'معرفی به آزمون شده' && (
+                                      <div className="mt-1 grid grid-cols-3 gap-1">
+                                        <select value={p.examDate ? p.examDate.split('/')[0] : ''} onChange={(ev) => updatePersonExamDate(p._id, `${ev.target.value}/${p.examDate ? p.examDate.split('/')[1] : ''}/${p.examDate ? p.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
+                                          <option value="">سال</option>
+                                          {Array.from({ length: 5 }, (_, i) => 1400 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
+                                        <select value={p.examDate ? p.examDate.split('/')[1] : ''} onChange={(ev) => updatePersonExamDate(p._id, `${p.examDate ? p.examDate.split('/')[0] : ''}/${ev.target.value}/${p.examDate ? p.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
+                                          <option value="">ماه</option>
+                                          {["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(m => <option key={m} value={m}>{m}</option>)}
+                                        </select>
+                                        <select value={p.examDate ? p.examDate.split('/')[2] : ''} onChange={(ev) => updatePersonExamDate(p._id, `${p.examDate ? p.examDate.split('/')[0] : ''}/${p.examDate ? p.examDate.split('/')[1] : ''}/${ev.target.value}`)} className="px-1 py-1 border rounded text-xs">
+                                          <option value="">روز</option>
+                                          {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d).padStart(2, '0')}>{String(d).padStart(2, '0')}</option>)}
+                                        </select>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="p-2 text-center">{p.hasPhoto ? <img src={`/api/persons/${p._id}?photo=true&pass=${encodeURIComponent(sessionStorage.getItem('admin_pass') || '')}&t=${Date.now()}`} alt="عکس" className="w-6 h-6 object-cover rounded mx-auto cursor-pointer" onClick={() => setSelectedPhoto(`/api/persons/${p._id}?photo=true&pass=${encodeURIComponent(sessionStorage.getItem('admin_pass') || '')}&t=${Date.now()}`)} /> : ''}</td>
+                                  <td className="p-2">
+                                    <div className="flex items-center gap-2">
+                                      <a href={`/?editId=${p._id}`} className="bg-sky-500 text-white px-3 py-1 rounded-full">ویرایش</a>
+                                      <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deletePerson(p._id)}>حذف</button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     )}
                   </motion.div>
                 )}
@@ -815,11 +858,12 @@ export default function AdminPage() {
                             <th className="p-2 bg-gray-50 hidden md:table-cell">رشته</th>
                             <th className="p-2 bg-gray-50">ماه/سال دوره</th>
                             <th className="p-2 bg-gray-50">وضعیت</th>
+                            <th className="p-2 bg-gray-50">پرداخت</th>
                             <th className="p-2 bg-gray-50">عملیات</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {examIntros.length === 0 && (<tr><td colSpan={10} className="p-6 text-center text-slate-500">هنوز معرفی به آزمون ثبت نشده است.</td></tr>)}
+                          {examIntros.length === 0 && (<tr><td colSpan={11} className="p-6 text-center text-slate-500">هنوز معرفی به آزمون ثبت نشده است.</td></tr>)}
                           {examIntros.map((e: any, i: number) => (
                             <tr
                               key={e._id}
@@ -859,10 +903,15 @@ export default function AdminPage() {
                                   </div>
                                 )}
                               </td>
+                              <td className="p-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={e.paid || false}
+                                  onChange={(ev) => updateExamIntroPaid(e._id, ev.target.checked)}
+                                />
+                              </td>
                               <td className="p-2">
-
                                 <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deleteExamIntro(e._id)}>حذف</button>
-
                               </td>
 
                             </tr>
@@ -951,6 +1000,7 @@ export default function AdminPage() {
                                 <td className="p-2">
                                   <select value={p.status || 'در انتظار تایید'} onChange={(e) => updatePersonStatus(p._id, e.target.value)} className="px-2 py-1 border rounded-md text-sm">
                                     <option value="در انتظار تایید">در انتظار تایید</option>
+                                    <option value="تایید">تایید</option>
                                     <option value="ثبت نام شده">ثبت نام شده</option>
                                     <option value="معرفی به آزمون شده">معرفی به آزمون شده</option>
                                   </select>
@@ -1152,6 +1202,14 @@ export default function AdminPage() {
                                 className="flex items-center justify-between p-2 border rounded-md"
                               >
                                 <InlineSkillEditor item={s} onDelete={() => deleteMehtaSkill(s._id)} onUpdate={(newName) => updateMehtaSkill(s._id, newName)} count={persons.filter(p => p.isMehtaPlan && p.skillField === s.skill).length} onClick={() => { setSelectedMehtaSkillFilter(selectedMehtaSkillFilter === s.skill ? null : s.skill); setActiveTab('mehta'); }} />
+                                <motion.button
+                                  className="px-2 py-1 bg-emerald-500 text-white rounded-md text-sm"
+                                  onClick={() => exportExcel(s.skill, 'mehta')}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  خروجی اکسل
+                                </motion.button>
                               </motion.div>
                             ))}
                           </motion.div>
