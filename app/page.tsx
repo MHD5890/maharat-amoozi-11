@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Calendar, Search, UserPlus, Eye, EyeOff, Upload, CheckCircle, XCircle, Bell } from 'lucide-react';
+import { User, Calendar, Search, UserPlus, Eye, EyeOff, Upload, CheckCircle, XCircle, Bell, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 // کتابخانه xlsx از طریق تگ script در layout.tsx بارگذاری می‌شود
 declare const XLSX: any;
@@ -111,6 +111,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
   const [mehtaSkills, setMehtaSkills] = useState<string[]>([]);
   const [regularSkills, setRegularSkills] = useState<string[]>([]);
 
+
   // load global skill offers once
   useEffect(() => {
     (async () => {
@@ -205,6 +206,53 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
       }
     } catch (err: any) {
       setTrackingMessage(err?.message || 'خطا در ارسال');
+      toast.error(err?.message || 'خطا در ارسال');
+    }
+  };
+
+  const handleCertificateSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!certificateNationalId || !/^\d{10}$/.test(certificateNationalId)) {
+      setCertificateMessage('کد ملی نامعتبر است');
+      toast.error('کد ملی نامعتبر است');
+      return;
+    }
+    setCertificateMessage('در حال دریافت مدرک...');
+    setCertificateResult(null);
+    try {
+      const res = await fetch(`/api/certificate?nationalId=${certificateNationalId}`);
+      const html = await res.text();
+      if (res.ok) {
+        setCertificateResult(html);
+        setCertificateMessage('');
+        toast.success('مدرک دریافت شد');
+      } else {
+        setCertificateMessage(html || 'خطا در دریافت مدرک');
+        toast.error(html || 'خطا در دریافت مدرک');
+      }
+    } catch (err: any) {
+      setCertificateMessage(err?.message || 'خطا در ارسال');
+      toast.error(err?.message || 'خطا در ارسال');
+    }
+  };
+
+  const handleResultsSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setResultsMessage('در حال بررسی...');
+    setResultsResult(null);
+    try {
+      const res = await fetch(`/api/results?nationalId=${resultsNationalId}`);
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.success) {
+        setResultsResult(body.data);
+        setResultsMessage('');
+        toast.success('اطلاعات با موفقیت یافت شد!');
+      } else {
+        setResultsMessage(body.message || 'خطا در بررسی');
+        toast.error(body.message || 'خطا در بررسی');
+      }
+    } catch (err: any) {
+      setResultsMessage(err?.message || 'خطا در ارسال');
       toast.error(err?.message || 'خطا در ارسال');
     }
   };
@@ -381,6 +429,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
             <Bell className="w-5 h-5 text-orange-500" />
             اطلاعیه ها و راهنمایی ها
           </motion.button>
+
         </div>
       </div>
       <div className="flex flex-col lg:grid lg:grid-cols-[0.8fr_1.2fr] gap-x-8 gap-y-6">
@@ -730,6 +779,8 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
               </motion.div>
 
             )}
+
+
 
           </AnimatePresence>
 

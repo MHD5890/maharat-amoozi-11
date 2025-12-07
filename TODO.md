@@ -7,6 +7,9 @@
 - [x] Ensure sidebar and form stack on mobile
 - [x] Adjust button sizes and spacing for mobile
 - [x] Make image previews responsive
+- [ ] Add new tabs for certificate viewing and exam results
+- [ ] Implement certificate inquiry section with iframe to https://azmoon.portaltvto.com/estelam/estelam
+- [ ] Implement exam results section with iframe to https://azmoon.portaltvto.com/result/result/index/1/80
 
 ## 2. Update app/admin/page.tsx
 - [x] Make admin panel container responsive
