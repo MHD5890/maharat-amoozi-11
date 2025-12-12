@@ -84,6 +84,18 @@ type AdminPageProps = {
 
 
 
+// helper function to convert URLs in text to clickable links
+const convertUrlsToLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/g;
+  return text.replace(urlRegex, (url) => {
+    let href = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      href = 'https://' + url;
+    }
+    return `<br><a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">اینجا کلیک کنید</a>`;
+  });
+};
+
 // === کامپوننت فرم ثبت نام / ویرایش ===
 const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterFormProps) => {
   const [activeFormTab, setActiveFormTab] = useState<'register' | 'exam' | 'tracking' | 'results' | 'guidelines'>('register');
@@ -437,7 +449,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
             whileTap={{ scale: 0.95 }}
           >
             <Bell className="w-5 h-5 text-orange-500" />
-            اطلاعیه ها و راهنمایی ها
+            اطلاعیه ها
           </motion.button>
 
         </div>
@@ -595,10 +607,14 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                     </div>
                   </motion.div>
                   <motion.div className="field sm:col-span-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-                    <label className="label flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-orange-500" />
-                      عکس پرسنلی(جهت صدور گواهی )
-                      توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید .(زیر300 کیلوبایت) اندازه عکس باید 4*3 باشد.
+                    <label className="label">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Upload className="w-4 h-4 text-orange-500" />
+                        <span className="font-bold text-black">عکس پرسنلی(روی گواهی چاپ می‌شود )</span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید (زیر300 کیلوبایت). اندازه عکس باید 4*3 باشد.
+                      </div>
                     </label>
                     {isEditMode && (initialData as any)?.hasPhoto && !deletePhoto && !formData.photo && (
                       <div className="mb-2">
@@ -746,43 +762,11 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
 
                   <Bell className="w-6 h-6 text-orange-500" />
 
-                  اطلاعیه ها و راهنمایی ها
+                  اطلاعیه ها
 
                 </h2>
 
                 <div className="space-y-6">
-
-                  <div className="bg-blue-50 border border-blue-300 text-blue-800 p-4 md:p-6 rounded-lg">
-
-                    <h3 className="font-bold text-lg mb-4">راهنمایی ثبت نام</h3>
-
-                    <ol className="list-decimal list-inside space-y-2">
-
-                      <li>فرم ثبت نام را با دقت تکمیل کنید.</li>
-
-                      <li>عکس پرسنلی با اندازه 4*3 و حجم کمتر از 100 کیلوبایت آپلود کنید.</li>
-
-                      <li>برای اطلاع از دوره ها و آزمون ها، عضو گروه روبیکا خانه مهارت شوید.</li>
-
-                      <li>در صورت انتخاب طرح مهتا، رشته های مهتا را انتخاب کنید.</li>
-
-                    </ol>
-
-                  </div>
-
-                  <div className="bg-green-50 border border-green-300 text-green-800 p-4 md:p-6 rounded-lg">
-
-                    <h3 className="font-bold text-lg mb-4">راهنمایی معرفی به آزمون</h3>
-
-                    <ol className="list-decimal list-inside space-y-2">
-
-                      <li>وارد لینک پرداخت شوید و اعتبار را خریداری کنید.</li>
-
-                      <li>پرداخت را انجام دهید.</li>
-
-                    </ol>
-
-                  </div>
 
                   <div>
 
@@ -797,17 +781,11 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                       <div className="space-y-4">
 
                         {announcements.map((ann: any) => (
-
                           <div key={ann._id} className="bg-white border rounded-lg p-4 shadow">
-
                             <h4 className="font-semibold">{ann.title}</h4>
-
-                            <p className="mt-2">{ann.content}</p>
-
+                            <p className="mt-2" dangerouslySetInnerHTML={{ __html: convertUrlsToLinks(ann.content) }}></p>
                             {ann.imageUrl && <img src={ann.imageUrl} alt="تصویر اطلاعیه" className="mt-2 max-w-full h-auto" />}
-
                           </div>
-
                         ))}
 
                       </div>
