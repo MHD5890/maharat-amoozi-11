@@ -29,6 +29,8 @@ export async function GET(request) {
 
             await dbConnect();
             const items = await ExamIntro.find({}).sort({ createdAt: 1 });
+            console.log('GET /api/examintro: Found', items.length, 'exam intro records');
+            console.log('NationalIds:', items.map(i => i.nationalId));
             return NextResponse.json({ success: true, data: items });
         }
     } catch (err) {

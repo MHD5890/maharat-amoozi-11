@@ -71,6 +71,8 @@ export default function AdminPage() {
 
   const [examIntros, setExamIntros] = useState<any[]>([]);
 
+
+
   const [notifications, setNotifications] = useState<any[]>([]);
   const [lastLoginTime, setLastLoginTime] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -121,16 +123,21 @@ export default function AdminPage() {
     })();
   }, []);
 
+  const loadExamIntros = async () => {
+    try {
+      const adminPass = sessionStorage.getItem('admin_pass') || '';
+      const res = await fetch(`/api/examintro?pass=${encodeURIComponent(adminPass)}`);
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.success) {
+        const data = body.data || [];
+        setExamIntros(data);
+      }
+    } catch (e) { /* ignore */ }
+  };
+
   // load exam intros
   useEffect(() => {
-    (async () => {
-      try {
-        const adminPass = sessionStorage.getItem('admin_pass') || '';
-        const res = await fetch(`/api/examintro?pass=${encodeURIComponent(adminPass)}`);
-        const body = await res.json().catch(() => ({}));
-        if (res.ok && body.success) setExamIntros(body.data || []);
-      } catch (e) { /* ignore */ }
-    })();
+    loadExamIntros();
   }, []);
 
   // load skills
@@ -399,15 +406,14 @@ export default function AdminPage() {
   const updateExamIntroStatus = async (id: string, newStatus: string, examDate?: string) => {
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const body = new URLSearchParams({ status: newStatus });
-      if (examDate !== undefined) body.set('examDate', examDate);
       const res = await fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, {
         method: 'PUT',
-        body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, examDate })
       });
       const resBody = await res.json().catch(() => ({}));
       if (res.ok && resBody.success) {
-        setExamIntros(prev => prev.map(e => e._id === id ? { ...e, status: newStatus, examDate: examDate !== undefined ? examDate : e.examDate } : e));
+        setExamIntros(prev => prev.map(e => e.nationalId === id ? { ...e, status: newStatus, examDate: examDate !== undefined ? examDate : e.examDate } : e));
         setStatusMessage('وضعیت بروزرسانی شد');
       } else {
         setStatusMessage(resBody.message || `خطا (${res.status})`);
@@ -420,14 +426,14 @@ export default function AdminPage() {
   const updateExamIntroCost = async (id: string, examCost: number) => {
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const body = new URLSearchParams({ examCost: examCost.toString() });
       const res = await fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, {
         method: 'PUT',
-        body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examCost })
       });
       const resBody = await res.json().catch(() => ({}));
       if (res.ok && resBody.success) {
-        setExamIntros(prev => prev.map(e => e._id === id ? { ...e, examCost } : e));
+        setExamIntros(prev => prev.map(e => e.nationalId === id ? { ...e, examCost } : e));
         setStatusMessage('هزینه آزمون بروزرسانی شد');
       } else {
         setStatusMessage(resBody.message || `خطا (${res.status})`);
@@ -438,22 +444,28 @@ export default function AdminPage() {
   };
 
   const updateExamIntroPaid = async (id: string, paid: boolean) => {
+    // Optimistic update
+    const previousPaid = examIntros.find(e => e.nationalId === id)?.paid;
+    setExamIntros(prev => prev.map(e => e.nationalId === id ? { ...e, paid } : e));
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const body = new URLSearchParams({ paid: paid.toString() });
       const res = await fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, {
         method: 'PUT',
-        body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paid })
       });
       const resBody = await res.json().catch(() => ({}));
       if (res.ok && resBody.success) {
-        setExamIntros(prev => prev.map(e => e._id === id ? { ...e, paid } : e));
         setStatusMessage('وضعیت پرداخت بروزرسانی شد');
       } else {
-        setStatusMessage(resBody.message || `خطا (${res.status})`);
+        // Revert optimistic update on failure
+        setExamIntros(prev => prev.map(e => e.nationalId === id ? { ...e, paid: previousPaid } : e));
+        setStatusMessage(resBody.message || `خطا در بروزرسانی پرداخت (${res.status})`);
       }
     } catch (e: any) {
-      setStatusMessage(e?.message || 'خطا در بروزرسانی وضعیت پرداخت');
+      // Revert optimistic update on error
+      setExamIntros(prev => prev.map(e => e.nationalId === id ? { ...e, paid: previousPaid } : e));
+      setStatusMessage(e?.message || 'خطا در بروزرسانی پرداخت');
     }
   };
 
@@ -463,7 +475,7 @@ export default function AdminPage() {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
       const res = await fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, { method: 'DELETE' });
       const body = await res.json().catch(() => ({}));
-      if (res.ok) { setExamIntros(prev => prev.filter(e => e._id !== id)); setStatusMessage('رکورد حذف شد'); }
+      if (res.ok) { setExamIntros(prev => prev.filter(e => e.nationalId !== id)); setStatusMessage('رکورد حذف شد'); }
       else setStatusMessage(body.message || `خطا (${res.status})`);
     } catch (e: any) { setStatusMessage(e?.message || 'خطا در حذف'); }
   };
@@ -518,7 +530,7 @@ export default function AdminPage() {
         setPersons(prev => prev.filter(p => !selectedIds.has(p._id)));
       } else {
         await Promise.all(ids.map(id => fetch(`/api/examintro/${id}?pass=${encodeURIComponent(adminPass)}`, { method: 'DELETE' })));
-        setExamIntros(prev => prev.filter(e => !selectedIds.has(e._id)));
+        setExamIntros(prev => prev.filter(e => !selectedIds.has(e.nationalId)));
       }
       setSelectedIds(new Set());
       setStatusMessage('رکوردهای انتخاب‌شده حذف شدند');
@@ -849,7 +861,7 @@ export default function AdminPage() {
                       >
                         <thead>
                           <tr className="text-left text-sm text-indigo-700">
-                            <th className="p-2 bg-gray-50"><input type="checkbox" onChange={() => { const all = examIntros.map(x => x._id); const allSelected = all.every(id => selectedIds.has(id)); if (allSelected) setSelectedIds(new Set()); else setSelectedIds(new Set(all)); }} checked={examIntros.length > 0 && examIntros.every(x => selectedIds.has(x._id))} /></th>
+                            <th className="p-2 bg-gray-50"><input type="checkbox" onChange={() => { const all = examIntros.map(x => x.nationalId); const allSelected = all.every(id => selectedIds.has(id)); if (allSelected) setSelectedIds(new Set()); else setSelectedIds(new Set(all)); }} checked={examIntros.length > 0 && examIntros.every(x => selectedIds.has(x.nationalId))} /></th>
                             <th className="p-2 bg-gray-50">ردیف</th>
                             <th className="p-2 bg-gray-50">نام</th>
                             <th className="p-2 bg-gray-50 hidden sm:table-cell">نام خانوادگی</th>
@@ -869,7 +881,7 @@ export default function AdminPage() {
                               key={e._id}
                               className="border-b"
                             >
-                              <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(e._id)} onChange={() => { setSelectedIds(prev => { const s = new Set(prev); if (s.has(e._id)) s.delete(e._id); else s.add(e._id); return s; }); }} /></td>
+                              <td className="p-2 text-center"><input type="checkbox" checked={selectedIds.has(e.nationalId)} onChange={() => { setSelectedIds(prev => { const s = new Set(prev); if (s.has(e.nationalId)) s.delete(e.nationalId); else s.add(e.nationalId); return s; }); }} /></td>
                               <td className="p-2">{i + 1}</td>
                               <td className="p-2">{e.firstName}</td>
                               <td className="p-2 hidden sm:table-cell">{e.lastName}</td>
@@ -880,7 +892,7 @@ export default function AdminPage() {
                               <td className="p-2">
                                 <select
                                   value={e.status || 'معرفی نشده'}
-                                  onChange={(ev) => updateExamIntroStatus(e._id, ev.target.value, e.examDate)}
+                                  onChange={(ev) => updateExamIntroStatus(e.nationalId, ev.target.value, e.examDate)}
                                   className="px-2 py-1 border rounded-md text-sm w-full"
                                 >
                                   <option value="معرفی نشده">معرفی نشده</option>
@@ -888,15 +900,15 @@ export default function AdminPage() {
                                 </select>
                                 {e.status === 'معرفی شده' && (
                                   <div className="mt-1 grid grid-cols-3 gap-1">
-                                    <select value={e.examDate ? e.examDate.split('/')[0] : ''} onChange={(ev) => updateExamIntroStatus(e._id, e.status, `${ev.target.value}/${e.examDate ? e.examDate.split('/')[1] : ''}/${e.examDate ? e.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
+                                    <select value={e.examDate ? e.examDate.split('/')[0] : ''} onChange={(ev) => updateExamIntroStatus(e.nationalId, e.status, `${ev.target.value}/${e.examDate ? e.examDate.split('/')[1] : ''}/${e.examDate ? e.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
                                       <option value="">سال</option>
                                       {Array.from({ length: 5 }, (_, i) => 1400 + i).map(y => <option key={y} value={y}>{y}</option>)}
                                     </select>
-                                    <select value={e.examDate ? e.examDate.split('/')[1] : ''} onChange={(ev) => updateExamIntroStatus(e._id, e.status, `${e.examDate ? e.examDate.split('/')[0] : ''}/${ev.target.value}/${e.examDate ? e.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
+                                    <select value={e.examDate ? e.examDate.split('/')[1] : ''} onChange={(ev) => updateExamIntroStatus(e.nationalId, e.status, `${e.examDate ? e.examDate.split('/')[0] : ''}/${ev.target.value}/${e.examDate ? e.examDate.split('/')[2] : ''}`)} className="px-1 py-1 border rounded text-xs">
                                       <option value="">ماه</option>
                                       {["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
-                                    <select value={e.examDate ? e.examDate.split('/')[2] : ''} onChange={(ev) => updateExamIntroStatus(e._id, e.status, `${e.examDate ? e.examDate.split('/')[0] : ''}/${e.examDate ? e.examDate.split('/')[1] : ''}/${ev.target.value}`)} className="px-1 py-1 border rounded text-xs">
+                                    <select value={e.examDate ? e.examDate.split('/')[2] : ''} onChange={(ev) => updateExamIntroStatus(e.nationalId, e.status, `${e.examDate ? e.examDate.split('/')[0] : ''}/${e.examDate ? e.examDate.split('/')[1] : ''}/${ev.target.value}`)} className="px-1 py-1 border rounded text-xs">
                                       <option value="">روز</option>
                                       {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={String(d).padStart(2, '0')}>{String(d).padStart(2, '0')}</option>)}
                                     </select>
@@ -904,14 +916,10 @@ export default function AdminPage() {
                                 )}
                               </td>
                               <td className="p-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={e.paid || false}
-                                  onChange={(ev) => updateExamIntroPaid(e._id, ev.target.checked)}
-                                />
+                                <input type="checkbox" checked={e.paid || false} onChange={(ev) => updateExamIntroPaid(e.nationalId, ev.target.checked)} />
                               </td>
                               <td className="p-2">
-                                <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deleteExamIntro(e._id)}>حذف</button>
+                                <button className="bg-red-500 text-white px-3 py-1 rounded-full" onClick={() => deleteExamIntro(e.nationalId)}>حذف</button>
                               </td>
 
                             </tr>

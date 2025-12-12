@@ -30,6 +30,7 @@ const serviceLocations = [
   { value: "9", numeric: "9", detailed: "گروه موشکی و توپخانه 65 صاعقه رفسنجان" },
   { value: "10", numeric: "10", detailed: "گروه امام حسین" },
   { value: "11", numeric: "11", detailed: "سایر" },
+  { value: "12", numeric: "12", detailed: " خانواده کارکنان " },
 ];
 
 // === اینترفیس‌ها ===
@@ -85,7 +86,7 @@ type AdminPageProps = {
 
 // === کامپوننت فرم ثبت نام / ویرایش ===
 const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterFormProps) => {
-  const [activeFormTab, setActiveFormTab] = useState<'register' | 'exam' | 'tracking' | 'guidelines'>('register');
+  const [activeFormTab, setActiveFormTab] = useState<'register' | 'exam' | 'tracking' | 'results' | 'guidelines'>('register');
   const [formData, setFormData] = useState<FormData>({
     firstName: '', lastName: '', fatherName: '', nationalId: '',
     birthDay: '', birthMonth: '', birthYear: '', phone: '', address: '',
@@ -421,6 +422,15 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
             پیگیری تاریخ آزمون
           </motion.button>
           <motion.button
+            className={`px-4 sm:px-6 py-3 rounded-md text-base sm:text-lg font-semibold flex items-center justify-center gap-2 w-full sm:w-auto ${activeFormTab === 'results' ? 'bg-white shadow' : ''}`}
+            onClick={() => setActiveFormTab('results')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Eye className="w-5 h-5 text-green-500" />
+            مشاهده نتیجه آزمون
+          </motion.button>
+          <motion.button
             className={`px-4 sm:px-6 py-3 rounded-md text-base sm:text-lg font-semibold flex items-center justify-center gap-2 w-full sm:w-auto ${activeFormTab === 'guidelines' ? 'bg-white shadow' : ''}`}
             onClick={() => setActiveFormTab('guidelines')}
             whileHover={{ scale: 1.05 }}
@@ -489,7 +499,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                   </motion.div>
                   <motion.div className="field" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
                     <label className="label">شماره تماس</label>
-                    <input className={inputStyle} name="phone" value={formData.phone} onChange={handleChange} type="tel" required />
+                    <input className={inputStyle} name="phone" value={formData.phone} onChange={handleChange} type="tel" inputMode="numeric" pattern="[0-9]{11}" placeholder="09123456789" required />
                   </motion.div>
                   <motion.div className="field" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                     <label className="label">شهر محل سکونت</label>
@@ -682,6 +692,38 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
 
               </motion.div>
 
+            )}
+
+            {activeFormTab === 'results' && (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center flex items-center justify-center gap-2">
+                  <Eye className="w-6 h-6 text-green-500" />
+                  مشاهده نتیجه آزمون
+                </h2>
+                <div className="space-y-6">
+                  <div className="bg-green-50 border border-green-300 text-green-800 p-4 md:p-6 rounded-lg">
+                    <h3 className="font-bold text-lg mb-4">راهنمایی مشاهده نتیجه آزمون</h3>
+                    <p className="mb-4">برای مشاهده نتیجه آزمون خود به لینک زیر مراجعه کنید:</p>
+                    <a href="https://azmoon.portaltvto.com/result/result/index/1/80" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline hover:text-purple-700 transition-colors font-semibold">مشاهده نتیجه آزمون</a>
+                    <div className="mt-4 space-y-2">
+                      <p>توضیحات:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>بعد از ۲ الی ۳ روز کاری از زمان آزمون آنلاین نمره داخل سایت گذاشته می‌شود.</li>
+                        <li>نمره قبولی تئوری ۵۰ به بالا می‌باشد.</li>
+                        <li>زمان ثبت نمره عملی حدوداً یک الی دو ماه بعد از نمره تئوری است.</li>
+                        <li>در صورت درج نمره عملی و نتیجه نهایی قبولی برای دریافت مدرک خود به سایت <a href="https://pay.portaltvto.com/pay/licence2" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline hover:text-purple-700">https://pay.portaltvto.com/pay/licence2</a> رفته و هزینه صدور گواهی خود به مبلغ ۱۰۰ هزار تومان را پرداخت کنید تا مدرک شما صادر گردد.</li>
+                        <li>سپس به سایت <a href="https://azmoon.portaltvto.com/estelam/estelam" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline hover:text-purple-700">https://azmoon.portaltvto.com/estelam/estelam</a> رفته و مدرک خود را دریافت کنید.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             )}
 
             {activeFormTab === 'guidelines' && (

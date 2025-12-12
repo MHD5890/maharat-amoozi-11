@@ -113,8 +113,7 @@ export async function GET(request) {
                 'وضعیت تاهل': p.maritalStatus || '',
                 'درخواست خوابگاه': p.requestDormitory ? '*' : '',
                 'طرح مهتا': p.isMehtaPlan ? '*' : '',
-                'ماه پایان خدمت': p.serviceEndMonth || '',
-                'سال پایان خدمت': p.serviceEndYear || '',
+                'ماه و سال پایان خدمت': p.serviceEndMonth && p.serviceEndYear ? `${p.serviceEndMonth}/${p.serviceEndYear}` : '',
                 'دارای گواهی فنی حرفه ای': p.hasCertificate ? '*' : '',
                 'نام گواهی': p.certificateName || '',
                 'تاریخ ثبت نام': dateStr,
@@ -125,7 +124,7 @@ export async function GET(request) {
             };
         });
 
-        const headers = ['ردیف', 'نام', 'نام خانوادگی', 'نام پدر', 'کد ملی', 'تاریخ تولد', 'شماره تماس', 'تحصیلات', 'محل سکونت', 'محل خدمت', 'رشته مهارت آموزی', 'سوابق مهارتی', 'وضعیت تاهل', 'درخواست خوابگاه', 'طرح مهتا', 'ماه پایان خدمت', 'سال پایان خدمت', 'تاریخ ثبت نام', 'تاریخ اعزام', 'وضعیت', 'تاریخ آزمون', 'عکس'];
+        const headers = ['ردیف', 'نام', 'نام خانوادگی', 'نام پدر', 'کد ملی', 'تاریخ تولد', 'شماره تماس', 'تحصیلات', 'محل سکونت', 'محل خدمت', 'رشته مهارت آموزی', 'سوابق مهارتی', 'وضعیت تاهل', 'درخواست خوابگاه', 'طرح مهتا', 'ماه و سال پایان خدمت', 'تاریخ ثبت نام', 'تاریخ اعزام', 'وضعیت', 'تاریخ آزمون', 'عکس'];
         const worksheet = XLSX.utils.json_to_sheet(dataForExcel, { header: headers });
         const workbook = XLSX.utils.book_new();
         const sheetName = 'Data';
