@@ -610,7 +610,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                     <label className="label">
                       <div className="flex items-center gap-2 mb-1">
                         <Upload className="w-4 h-4 text-orange-500" />
-                        <span className="font-bold text-black">عکس پرسنلی(روی گواهی چاپ می‌شود )</span>
+                        <span className="font-bold text-black">عکس پرسنلی(روی گواهی چاپ می‌شود )(در صورت بارگذاری نکردن ثبت نام نمی‌شوید )</span>
                       </div>
                       <div className="text-sm text-gray-600">
                         توجه : در صورت مشاهده خطای 400 حجم  عکس خود را کاهش دهید (زیر300 کیلوبایت). اندازه عکس باید 4*3 باشد.
