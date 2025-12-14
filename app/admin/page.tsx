@@ -788,7 +788,10 @@ export default function AdminPage() {
                                     <select value={p.status || 'در انتظار تایید'} onChange={(e) => updatePersonStatus(p._id, e.target.value)} className="px-2 py-1 border rounded-md text-sm">
                                       <option value="در انتظار تایید">در انتظار تایید</option>
                                       <option value="تایید">تایید</option>
+                                      <option value="کفایت از دوره">کفایت از دوره</option>
+                                      <option value="حذف از دوره">حذف از دوره</option>
                                       <option value="ثبت نام شده">ثبت نام شده</option>
+                                      <option value="معرفی به یگان">معرفی به یگان</option>
                                       <option value="معرفی به آزمون شده">معرفی به آزمون شده</option>
                                     </select>
                                     {p.status === 'معرفی به آزمون شده' && (
@@ -1009,7 +1012,10 @@ export default function AdminPage() {
                                   <select value={p.status || 'در انتظار تایید'} onChange={(e) => updatePersonStatus(p._id, e.target.value)} className="px-2 py-1 border rounded-md text-sm">
                                     <option value="در انتظار تایید">در انتظار تایید</option>
                                     <option value="تایید">تایید</option>
+                                    <option value="کفایت از دوره">کفایت از دوره</option>
+                                    <option value="حذف از دوره">حذف از دوره</option>
                                     <option value="ثبت نام شده">ثبت نام شده</option>
+                                    <option value="معرفی به یگان">معرفی به یگان</option>
                                     <option value="معرفی به آزمون شده">معرفی به آزمون شده</option>
                                   </select>
                                   {p.status === 'معرفی به آزمون شده' && (
