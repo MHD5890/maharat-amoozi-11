@@ -39,7 +39,7 @@ function InlineSkillEditor({ item, onDelete, onUpdate, count, onClick }: { item:
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'persons' | 'mehta' | 'exam' | 'announcements'>('persons');
+  const [activeTab, setActiveTab] = useState<'persons' | 'mehta' | 'exam'>('persons');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
   const [persons, setPersons] = useState<Person[]>([]);
@@ -59,7 +59,7 @@ export default function AdminPage() {
   const [newAnnouncementImage, setNewAnnouncementImage] = useState<File | null>(null);
   const [editingAnnouncement, setEditingAnnouncement] = useState<any | null>(null);
 
-  const [sidebarTab, setSidebarTab] = useState<'skills' | 'mehta-skills' | 'announcements'>('skills');
+  const [sidebarTab, setSidebarTab] = useState<'skills' | 'mehta-skills'>('skills');
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -717,6 +717,14 @@ export default function AdminPage() {
                 >
                   مهتا
                 </motion.button>
+                <motion.button
+                  className={`px-4 py-2 rounded-md ${activeTab === 'announcements' ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}
+                  onClick={() => setActiveTab('announcements')}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  اطلاعیه‌ها
+                </motion.button>
               </div>
 
               <AnimatePresence mode="wait">
@@ -1051,6 +1059,115 @@ export default function AdminPage() {
 
                   </motion.div>
                 )}
+
+                {activeTab === 'announcements' && (
+                  <motion.div
+                    key="announcements"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-lg font-semibold">اطلاعیه‌ها</div>
+                      <div className="text-sm text-slate-600">تعداد: {announcements.length}</div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="border rounded-md p-4">
+                        <h4 className="font-semibold mb-2">افزودن اطلاعیه جدید</h4>
+                        <input placeholder="عنوان" className="w-full px-3 py-2 border rounded-md mb-2" value={newAnnouncementTitle} onChange={(e) => setNewAnnouncementTitle(e.target.value)} />
+                        <textarea placeholder="محتوا" className="w-full px-3 py-2 border rounded-md mb-2" rows={3} value={newAnnouncementContent} onChange={(e) => setNewAnnouncementContent(e.target.value)} />
+                        <input type="file" accept="image/*" onChange={(e) => setNewAnnouncementImage(e.target.files?.[0] || null)} className="mb-2" />
+                        <motion.button
+                          className={`px-3 py-2 rounded-md ${newAnnouncementTitle && newAnnouncementContent ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                          onClick={() => addAnnouncement()}
+                          disabled={!newAnnouncementTitle || !newAnnouncementContent}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          افزودن
+                        </motion.button>
+                      </div>
+                      <AnimatePresence>
+                        {announcements.length === 0 ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-slate-500"
+                          >
+                            هیچ اطلاعیه ای وجود ندارد.
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="space-y-2"
+                          >
+                            {announcements.map((a: any, index: number) => (
+                              <motion.div
+                                key={a._id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="border rounded-md p-4"
+                              >
+                                {editingAnnouncement && editingAnnouncement._id === a._id ? (
+                                  <div>
+                                    <input placeholder="عنوان" className="w-full px-3 py-2 border rounded-md mb-2" value={editingAnnouncement.title} onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, title: e.target.value })} />
+                                    <textarea placeholder="محتوا" className="w-full px-3 py-2 border rounded-md mb-2" rows={3} value={editingAnnouncement.content} onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, content: e.target.value })} />
+                                    <input type="file" accept="image/*" onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, image: e.target.files?.[0] })} className="mb-2" />
+                                    <div className="flex gap-2">
+                                      <motion.button
+                                        className="px-3 py-2 bg-emerald-500 text-white rounded-md"
+                                        onClick={() => updateAnnouncement(a._id, editingAnnouncement.title || '', editingAnnouncement.content || '', editingAnnouncement.image)}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                      >
+                                        ذخیره
+                                      </motion.button>
+                                      <motion.button
+                                        className="px-3 py-2 bg-gray-500 text-white rounded-md"
+                                        onClick={() => setEditingAnnouncement(null)}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                      >
+                                        لغو
+                                      </motion.button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <h5 className="font-semibold">{a.title}</h5>
+                                    <p className="mt-2">{a.content}</p>
+                                    {a.imageUrl && <img src={a.imageUrl} alt="تصویر اطلاعیه" className="mt-2 max-w-full h-auto" />}
+                                    <div className="flex gap-2 mt-2">
+                                      <motion.button
+                                        className="px-3 py-1 bg-sky-500 text-white rounded-md"
+                                        onClick={() => setEditingAnnouncement(a)}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                      >
+                                        ویرایش
+                                      </motion.button>
+                                      <motion.button
+                                        className="px-3 py-1 bg-red-500 text-white rounded-md"
+                                        onClick={() => deleteAnnouncement(a._id)}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                      >
+                                        حذف
+                                      </motion.button>
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           </div>
@@ -1074,14 +1191,7 @@ export default function AdminPage() {
                 >
                   دوره‌های مهتا
                 </motion.button>
-                <motion.button
-                  className={`px-4 py-2 rounded-md ${sidebarTab === 'announcements' ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}
-                  onClick={() => setSidebarTab('announcements')}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  اطلاعیه‌ها
-                </motion.button>
+  
               </div>
 
               <AnimatePresence mode="wait">
@@ -1144,7 +1254,7 @@ export default function AdminPage() {
                                 transition={{ delay: index * 0.1 }}
                                 className="flex items-center justify-between p-2 border rounded-md"
                               >
-                                <InlineSkillEditor item={s} onDelete={() => deleteSkillOffer(s._id)} onUpdate={(newName) => updateSkillOffer(s._id, newName)} count={skillCounts[s.skill] || 0} onClick={() => setSelectedSkillFilter(selectedSkillFilter === s.skill ? null : s.skill)} />
+                                <InlineSkillEditor item={s} onDelete={() => deleteSkillOffer(s.skill)} onUpdate={(newName) => updateSkillOffer(s.skill, newName)} count={skillCounts[s.skill] || 0} onClick={() => setSelectedSkillFilter(selectedSkillFilter === s.skill ? null : s.skill)} />
                                 <motion.button
                                   className="px-2 py-1 bg-emerald-500 text-white rounded-md text-sm"
                                   onClick={() => exportExcel(s.skill)}
@@ -1215,7 +1325,7 @@ export default function AdminPage() {
                                 transition={{ delay: index * 0.1 }}
                                 className="flex items-center justify-between p-2 border rounded-md"
                               >
-                                <InlineSkillEditor item={s} onDelete={() => deleteMehtaSkill(s._id)} onUpdate={(newName) => updateMehtaSkill(s._id, newName)} count={persons.filter(p => p.isMehtaPlan && p.skillField === s.skill).length} onClick={() => { setSelectedMehtaSkillFilter(selectedMehtaSkillFilter === s.skill ? null : s.skill); setActiveTab('mehta'); }} />
+                                <InlineSkillEditor item={s} onDelete={() => deleteMehtaSkill(s.skill)} onUpdate={(newName) => updateMehtaSkill(s.skill, newName)} count={persons.filter(p => p.isMehtaPlan && p.skillField === s.skill).length} onClick={() => { setSelectedMehtaSkillFilter(selectedMehtaSkillFilter === s.skill ? null : s.skill); setActiveTab('mehta'); }} />
                                 <motion.button
                                   className="px-2 py-1 bg-emerald-500 text-white rounded-md text-sm"
                                   onClick={() => exportExcel(s.skill, 'mehta')}

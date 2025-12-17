@@ -14,7 +14,8 @@ export async function GET(request) {
         if (month) filter.month = month;
         if (year) filter.year = year;
         const items = await SkillOffer.find(filter).sort({ skill: 1 }).lean();
-        return NextResponse.json({ success: true, data: items });
+        const data = items.map(s => ({ ...s, id: s._id.toString() }));
+        return NextResponse.json({ success: true, data });
     } catch (err) {
         console.error('GET /api/skill-offers error:', err);
         return NextResponse.json({ success: false, message: 'خطا در دریافت لیست رشته‌ها', error: err?.message || String(err) }, { status: 500 });

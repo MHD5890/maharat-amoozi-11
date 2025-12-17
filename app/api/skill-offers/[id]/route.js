@@ -5,10 +5,11 @@ import { checkAdmin } from '@/lib/checkAdmin';
 
 export async function DELETE(request, { params }) {
     try {
+        console.log('DELETE /api/skill-offers/[id] params.id:', params.id);
         const notAllowed = checkAdmin(request);
         if (notAllowed) return notAllowed;
         await dbConnect();
-        const item = await SkillOffer.findByIdAndDelete(params.id);
+        const item = await SkillOffer.findOneAndDelete({ skill: params.id });
         if (!item) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
         return NextResponse.json({ success: true, message: 'حذف شد' });
     } catch (err) {
@@ -20,7 +21,7 @@ export async function DELETE(request, { params }) {
 export async function GET(request, { params }) {
     try {
         await dbConnect();
-        const item = await SkillOffer.findById(params.id);
+        const item = await SkillOffer.findOne({ skill: params.id });
         if (!item) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
         return NextResponse.json({ success: true, data: item });
     } catch (err) {
@@ -31,6 +32,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
     try {
+        console.log('PUT /api/skill-offers/[id] params.id:', params.id);
         const notAllowed = checkAdmin(request);
         if (notAllowed) return notAllowed;
 
@@ -42,7 +44,7 @@ export async function PUT(request, { params }) {
         if (month !== undefined) update.month = month;
         if (year !== undefined) update.year = year;
         if (skill !== undefined) update.skill = skill;
-        const item = await SkillOffer.findByIdAndUpdate(params.id, update, { new: true, runValidators: true });
+        const item = await SkillOffer.findOneAndUpdate({ skill: params.id }, update, { new: true, runValidators: true });
         if (!item) return NextResponse.json({ success: false, message: '\u06cc\u0627\u0641\u062a \u0646\u0634\u062f' }, { status: 404 });
         return NextResponse.json({ success: true, data: item });
     } catch (err) {
