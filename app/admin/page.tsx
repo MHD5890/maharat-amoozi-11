@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -13,7 +12,65 @@ import toast from 'react-hot-toast';
 // - Persons / Exam tabs
 // - Export buttons (full and per-skill)
 
-type Person = any;
+interface Person {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  fatherName?: string;
+  nationalId: string;
+  phone: string;
+  city?: string;
+  education?: string;
+  placeOfService?: string;
+  skillField?: string;
+  maritalStatus?: string;
+  status?: string;
+  examDate?: string;
+  courseMonth?: string;
+  courseYear?: string;
+  hasPhoto?: boolean;
+  isMehtaPlan?: boolean;
+  createdAt?: string;
+}
+
+interface Skill {
+  _id: string;
+  skill: string;
+}
+
+interface MehtaSkill {
+  _id: string;
+  skill: string;
+}
+
+interface Announcement {
+  _id: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+}
+
+interface ExamIntro {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  nationalId: string;
+  phone: string;
+  skillField?: string;
+  courseMonth?: string;
+  courseYear?: string;
+  status?: string;
+  examDate?: string;
+  paid?: boolean;
+  examCost?: number;
+}
+
+interface NotificationItem {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: Date;
+}
 
 function InlineSkillEditor({ item, onDelete, onUpdate, count, onClick }: { item: any; onDelete: () => void; onUpdate: (newName: string) => void; count: number; onClick: () => void }) {
   const [editing, setEditing] = useState(false);
@@ -39,7 +96,7 @@ function InlineSkillEditor({ item, onDelete, onUpdate, count, onClick }: { item:
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'persons' | 'mehta' | 'exam'>('persons');
+  const [activeTab, setActiveTab] = useState<'persons' | 'mehta' | 'exam' | 'announcements'>('persons');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
   const [persons, setPersons] = useState<Person[]>([]);
@@ -145,7 +202,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/skill-offers');
       const body = await res.json().catch(() => ({}));
-      if (res.ok && body.success) setAllSkillOffers(body.data || []);
+      if (res.ok && body.success) setAllSkillOffers((body.data || []).filter((s: any, index: number, self: any[]) => self.findIndex((t: any) => t.skill === s.skill) === index));
       else setAllSkillOffers([]);
     } catch (e) { setAllSkillOffers([]); }
   };
@@ -188,7 +245,7 @@ export default function AdminPage() {
     if (!confirm('آیا حذف شود؟')) return;
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const res = await fetch(`/api/skill-offers/${id}?pass=${encodeURIComponent(adminPass)}`, { method: 'DELETE' });
+      const res = await fetch(`/api/skill-offers/${encodeURIComponent(id)}?pass=${encodeURIComponent(adminPass)}`, { method: 'DELETE' });
       if (res.ok) { await loadAllSkillOffers(); setStatusMessage('رشته حذف شد'); }
       else { const body = await res.json().catch(() => ({})); setStatusMessage(body.message || `خطا (${res.status})`); }
     } catch (e: any) { setStatusMessage(e?.message || 'خطا در حذف رشته'); }
@@ -197,7 +254,7 @@ export default function AdminPage() {
   const updateSkillOffer = async (id: string, newName: string) => {
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const res = await fetch(`/api/skill-offers/${id}?pass=${encodeURIComponent(adminPass)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skill: newName }) });
+      const res = await fetch(`/api/skill-offers/${encodeURIComponent(id)}?pass=${encodeURIComponent(adminPass)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skill: newName }) });
       const body = await res.json().catch(() => ({}));
       if (res.ok && body.success) { await loadAllSkillOffers(); setStatusMessage('رشته بروزرسانی شد'); }
       else setStatusMessage(body.message || `خطا (${res.status})`);
@@ -346,7 +403,7 @@ export default function AdminPage() {
     if (!confirm('آیا حذف شود؟')) return;
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const res = await fetch(`/api/mehta-skills/${id}?pass=${encodeURIComponent(adminPass)}`, { method: 'DELETE' });
+      const res = await fetch(`/api/mehta-skills/${encodeURIComponent(id)}?pass=${encodeURIComponent(adminPass)}`, { method: 'DELETE' });
       if (res.ok) { await loadAllMehtaSkills(); setStatusMessage('رشته مهتا حذف شد'); }
       else { const body = await res.json().catch(() => ({})); setStatusMessage(body.message || `خطا (${res.status})`); }
     } catch (e: any) { setStatusMessage(e?.message || 'خطا در حذف رشته مهتا'); }
@@ -355,7 +412,7 @@ export default function AdminPage() {
   const updateMehtaSkill = async (id: string, newName: string) => {
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
-      const res = await fetch(`/api/mehta-skills/${id}?pass=${encodeURIComponent(adminPass)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skill: newName }) });
+      const res = await fetch(`/api/mehta-skills/${encodeURIComponent(id)}?pass=${encodeURIComponent(adminPass)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ skill: newName }) });
       const body = await res.json().catch(() => ({}));
       if (res.ok && body.success) { await loadAllMehtaSkills(); setStatusMessage('رشته مهتا بروزرسانی شد'); }
       else setStatusMessage(body.message || `خطا (${res.status})`);
@@ -1191,7 +1248,7 @@ export default function AdminPage() {
                 >
                   دوره‌های مهتا
                 </motion.button>
-  
+
               </div>
 
               <AnimatePresence mode="wait">
@@ -1334,115 +1391,6 @@ export default function AdminPage() {
                                 >
                                   خروجی اکسل
                                 </motion.button>
-                              </motion.div>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </motion.div>
-                )}
-
-                {sidebarTab === 'announcements' && (
-                  <motion.div
-                    key="announcements"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-lg font-semibold">اطلاعیه‌ها</div>
-                      <div className="text-sm text-slate-600">تعداد: {announcements.length}</div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="border rounded-md p-4">
-                        <h4 className="font-semibold mb-2">افزودن اطلاعیه جدید</h4>
-                        <input placeholder="عنوان" className="w-full px-3 py-2 border rounded-md mb-2" value={newAnnouncementTitle} onChange={(e) => setNewAnnouncementTitle(e.target.value)} />
-                        <textarea placeholder="محتوا" className="w-full px-3 py-2 border rounded-md mb-2" rows={3} value={newAnnouncementContent} onChange={(e) => setNewAnnouncementContent(e.target.value)} />
-                        <input type="file" accept="image/*" onChange={(e) => setNewAnnouncementImage(e.target.files?.[0] || null)} className="mb-2" />
-                        <motion.button
-                          className={`px-3 py-2 rounded-md ${newAnnouncementTitle && newAnnouncementContent ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
-                          onClick={() => addAnnouncement()}
-                          disabled={!newAnnouncementTitle || !newAnnouncementContent}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          افزودن
-                        </motion.button>
-                      </div>
-                      <AnimatePresence>
-                        {announcements.length === 0 ? (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="text-slate-500"
-                          >
-                            هیچ اطلاعیه ای وجود ندارد.
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="space-y-2"
-                          >
-                            {announcements.map((a: any, index: number) => (
-                              <motion.div
-                                key={a._id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                className="border rounded-md p-4"
-                              >
-                                {editingAnnouncement && editingAnnouncement._id === a._id ? (
-                                  <div>
-                                    <input placeholder="عنوان" className="w-full px-3 py-2 border rounded-md mb-2" value={editingAnnouncement.title} onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, title: e.target.value })} />
-                                    <textarea placeholder="محتوا" className="w-full px-3 py-2 border rounded-md mb-2" rows={3} value={editingAnnouncement.content} onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, content: e.target.value })} />
-                                    <input type="file" accept="image/*" onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, image: e.target.files?.[0] })} className="mb-2" />
-                                    <div className="flex gap-2">
-                                      <motion.button
-                                        className="px-3 py-2 bg-emerald-500 text-white rounded-md"
-                                        onClick={() => updateAnnouncement(a._id, editingAnnouncement.title, editingAnnouncement.content, editingAnnouncement.image)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                      >
-                                        ذخیره
-                                      </motion.button>
-                                      <motion.button
-                                        className="px-3 py-2 bg-gray-500 text-white rounded-md"
-                                        onClick={() => setEditingAnnouncement(null)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                      >
-                                        لغو
-                                      </motion.button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div>
-                                    <h5 className="font-semibold">{a.title}</h5>
-                                    <p className="mt-2">{a.content}</p>
-                                    {a.imageUrl && <img src={a.imageUrl} alt="تصویر اطلاعیه" className="mt-2 max-w-full h-auto" />}
-                                    <div className="flex gap-2 mt-2">
-                                      <motion.button
-                                        className="px-3 py-1 bg-sky-500 text-white rounded-md"
-                                        onClick={() => setEditingAnnouncement(a)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                      >
-                                        ویرایش
-                                      </motion.button>
-                                      <motion.button
-                                        className="px-3 py-1 bg-red-500 text-white rounded-md"
-                                        onClick={() => deleteAnnouncement(a._id)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                      >
-                                        حذف
-                                      </motion.button>
-                                    </div>
-                                  </div>
-                                )}
                               </motion.div>
                             ))}
                           </motion.div>

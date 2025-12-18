@@ -2,6 +2,7 @@ import dbConnect from '@/lib/dbConnect';
 import SkillOffer from '@/models/SkillOffer';
 import { NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/checkAdmin';
+import mongoose from 'mongoose';
 
 export async function DELETE(request, { params }) {
     try {
@@ -9,7 +10,16 @@ export async function DELETE(request, { params }) {
         const notAllowed = checkAdmin(request);
         if (notAllowed) return notAllowed;
         await dbConnect();
-        const item = await SkillOffer.findOneAndDelete({ skill: params.id });
+        const { id } = await params;
+        let item;
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            item = await SkillOffer.findByIdAndDelete(id);
+        } else {
+            const itemBySkill = await SkillOffer.findOne({ skill: id });
+            if (itemBySkill) {
+                item = await SkillOffer.findByIdAndDelete(itemBySkill._id);
+            }
+        }
         if (!item) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
         return NextResponse.json({ success: true, message: 'حذف شد' });
     } catch (err) {
@@ -21,7 +31,13 @@ export async function DELETE(request, { params }) {
 export async function GET(request, { params }) {
     try {
         await dbConnect();
-        const item = await SkillOffer.findOne({ skill: params.id });
+        const { id } = params;
+        let item;
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            item = await SkillOffer.findById(id);
+        } else {
+            item = await SkillOffer.findOne({ skill: id });
+        }
         if (!item) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
         return NextResponse.json({ success: true, data: item });
     } catch (err) {
@@ -37,22 +53,37 @@ export async function PUT(request, { params }) {
         if (notAllowed) return notAllowed;
 
         await dbConnect();
+        const { id } = await params;
         const body = await request.json();
         const { month, year, skill } = body;
         if (!month && !year && !skill) return NextResponse.json({ success: false, message: 'no fields to update' }, { status: 400 });
+
+        let currentItem;
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            currentItem = await SkillOffer.findById(id);
+        } else {
+            currentItem = await SkillOffer.findOne({ skill: id });
+        }
+        if (!currentItem) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
+
         const update = {};
         if (month !== undefined) update.month = month;
         if (year !== undefined) update.year = year;
-        if (skill !== undefined) update.skill = skill;
-        const item = await SkillOffer.findOneAndUpdate({ skill: params.id }, update, { new: true, runValidators: true });
-        if (!item) return NextResponse.json({ success: false, message: '\u06cc\u0627\u0641\u062a \u0646\u0634\u062f' }, { status: 404 });
+        if (skill !== undefined) {
+            if (currentItem.skill !== skill) {
+                const existingSkill = await SkillOffer.findOne({ skill });
+                if (existingSkill) {
+                    return NextResponse.json({ success: false, message: 'رشته تکراری است' }, { status: 400 });
+                }
+            }
+            update.skill = skill;
+        }
+
+        const item = await SkillOffer.findByIdAndUpdate(currentItem._id, update, { new: true, runValidators: true });
+        if (!item) return NextResponse.json({ success: false, message: 'یافت نشد' }, { status: 404 });
         return NextResponse.json({ success: true, data: item });
     } catch (err) {
         console.error('PUT /api/skill-offers/[id] error:', err);
-        // handle duplicate key error
-        if (err && err.code === 11000) {
-            return NextResponse.json({ success: false, message: 'رشته تکراری است' }, { status: 409 });
-        }
-        return NextResponse.json({ success: false, message: '\u062f\u0631 \u0628\u0631\u0631\u0633\u0627\u0646\u06cc', error: err?.message || String(err) }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'در بروزرسانی', error: err?.message || String(err) }, { status: 500 });
     }
 }

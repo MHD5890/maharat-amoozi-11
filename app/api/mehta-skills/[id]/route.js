@@ -10,7 +10,7 @@ export async function PUT(request, { params }) {
         if (notAllowed) return notAllowed;
 
         await dbConnect();
-        const { id } = params;
+        const { id } = await params;
         console.log('PUT /api/mehta-skills/[id] id:', id);
         console.log('PUT /api/mehta-skills/[id] params:', params);
         const body = await request.json();
@@ -47,7 +47,7 @@ export async function DELETE(request, { params }) {
         if (notAllowed) return notAllowed;
 
         await dbConnect();
-        const { id } = params;
+        const { id } = await params;
         console.log('DELETE /api/mehta-skills/[id] id:', id, 'isValidObjectId:', mongoose.Types.ObjectId.isValid(id));
         console.log('DELETE /api/mehta-skills/[id] params:', params);
         let item;
