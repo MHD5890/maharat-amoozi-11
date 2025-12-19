@@ -551,8 +551,20 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                   <motion.div className="field sm:col-span-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
                     <label className="label">رشته مهارت آموزی (اولویت بندی کنید)</label>
                     <div className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" name="isMehtaPlan" checked={!!formData.isMehtaPlan} onChange={handleChange} />
-                      <span className="text-sm">طرح مهتا (اشتغال پس از آموزش)</span>
+                      <button
+                        type="button"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all ${!formData.isMehtaPlan ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        onClick={() => setFormData({ ...formData, isMehtaPlan: false })}
+                      >
+                        دوره های ماهانه
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all ${formData.isMehtaPlan ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        onClick={() => setFormData({ ...formData, isMehtaPlan: true })}
+                      >
+                        دوره های طرح مهتا(اشتغال پس از آموزش)
+                      </button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <select className={inputStyle} name="skill1" value={formData.skill1} onChange={handleChange} required={availableSkills.length > 0}>
