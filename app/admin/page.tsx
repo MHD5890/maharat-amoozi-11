@@ -165,7 +165,7 @@ export default function AdminPage() {
               const notifs = newRegistrations.map((p: any) => ({
                 id: p._id,
                 type: 'registration',
-                message: `کاربر ${p.firstName} ${p.lastName} در دوره ${p.skillField || 'نامشخص'} ثبت نام کرده است.`,
+                message: `کاربر ${p.firstName} ${p.lastName} در ${p.isMehtaPlan ? 'طرح مهتا' : 'دوره ماهانه'} ${p.skillField || 'نامشخص'} ثبت نام کرده است.`,
                 timestamp: new Date(p.createdAt),
               }));
               setNotifications(notifs);
