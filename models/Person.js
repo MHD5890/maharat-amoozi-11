@@ -14,6 +14,7 @@ const PersonSchema = new mongoose.Schema({
     phone: { type: String },
     city: { type: String }, // محل سکونت
     education: { type: String, required: true },
+    fieldOfStudy: { type: String }, // رشته تحصیلی
     placeOfService: { type: String },
     maritalStatus: { type: String, required: true },
     skill1: { type: String, required: true },

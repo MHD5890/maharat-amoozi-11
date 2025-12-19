@@ -38,7 +38,7 @@ interface FormData {
   firstName?: string; lastName?: string; fatherName?: string;
   nationalId?: string; birthDay?: string; birthMonth?: string;
   birthYear?: string; phone?: string; address?: string;
-  degree?: string; skill1?: string; skill2?: string; skill3?: string; marital?: string;
+  degree?: string; fieldOfStudy?: string; skill1?: string; skill2?: string; skill3?: string; marital?: string;
   skillHistory?: string;
   dispatchMonth?: string; dispatchYear?: string;
   requestDormitory?: boolean;
@@ -102,7 +102,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
   const [formData, setFormData] = useState<FormData>({
     firstName: '', lastName: '', fatherName: '', nationalId: '',
     birthDay: '', birthMonth: '', birthYear: '', phone: '', address: '',
-    degree: 'دیپلم', skill1: '', skill2: '', skill3: '', marital: 'مجرد',
+    degree: 'دیپلم', fieldOfStudy: '', skill1: '', skill2: '', skill3: '', marital: 'مجرد',
     skillHistory: '',
     dispatchMonth: '', dispatchYear: '',
     requestDormitory: false,
@@ -184,7 +184,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
     if (isEditMode && initialData) {
       const [year, month, day] = initialData.birthDate ? initialData.birthDate.split('/') : ['', '', ''];
       const [dispatchYear, dispatchMonth] = initialData.dispatchDate ? initialData.dispatchDate.split('/') : ['', ''];
-      setFormData({ ...initialData, birthDay: day, birthMonth: month, birthYear: year, dispatchMonth, dispatchYear, skill1: initialData.skill1 || '', skill2: initialData.skill2 || '', skill3: initialData.skill3 || '', skillHistory: (initialData as any).skillHistory || '', requestDormitory: (initialData as any).requestDormitory || false, placeOfService: (initialData as any).placeOfService || '', isMehtaPlan: (initialData as any).isMehtaPlan || false, customSkill: (initialData as any).customSkill || '', serviceEndMonth: (initialData as any).serviceEndMonth || '', serviceEndYear: (initialData as any).serviceEndYear || '', hasCertificate: (initialData as any).hasCertificate || false, certificateName: (initialData as any).certificateName || '' });
+      setFormData({ ...initialData, birthDay: day, birthMonth: month, birthYear: year, dispatchMonth, dispatchYear, skill1: initialData.skill1 || '', skill2: initialData.skill2 || '', skill3: initialData.skill3 || '', skillHistory: (initialData as any).skillHistory || '', requestDormitory: (initialData as any).requestDormitory || false, placeOfService: (initialData as any).placeOfService || '', isMehtaPlan: (initialData as any).isMehtaPlan || false, customSkill: (initialData as any).customSkill || '', serviceEndMonth: (initialData as any).serviceEndMonth || '', serviceEndYear: (initialData as any).serviceEndYear || '', hasCertificate: (initialData as any).hasCertificate || false, certificateName: (initialData as any).certificateName || '', fieldOfStudy: (initialData as any).fieldOfStudy || '' });
       setDeletePhoto(false);
     }
   }, [initialData, isEditMode]);
@@ -375,7 +375,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
               setFormData({
                 firstName: '', lastName: '', fatherName: '', nationalId: '',
                 birthDay: '', birthMonth: '', birthYear: '', phone: '', address: '',
-                degree: 'دیپلم', skill1: '', skill2: '', skill3: '', marital: 'مجرد',
+                degree: 'دیپلم', fieldOfStudy: '', skill1: '', skill2: '', skill3: '', marital: 'مجرد',
                 skillHistory: '',
                 dispatchMonth: '', dispatchYear: '', requestDormitory: false, photo: undefined,
                 isMehtaPlan: false, customSkill: '', serviceEndMonth: '', serviceEndYear: '',
@@ -531,8 +531,12 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                       <option value="لیسانس">لیسانس</option><option value="فوق لیسانس">فوق لیسانس</option><option value="دکتری">دکتری</option>
                     </select>
                   </motion.div>
+                  <motion.div className="field" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+                    <label className="label">رشته تحصیلی</label>
+                    <input className={inputStyle} name="fieldOfStudy" value={formData.fieldOfStudy} onChange={handleChange} placeholder="رشته تحصیلی خود را وارد کنید" />
+                  </motion.div>
                   <motion.div className="field sm:col-span-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                    <label className="label">آیا دارای گواهی فنی حرفه ای یا دیپلم کار و دانش هستید؟</label>
+                    <label className="label">آیا دارای گواهی (فنی حرفه ای و غیره ...) یا دیپلم کار و دانش هستید؟</label>
                     <div className="flex items-center gap-2">
                       <input type="checkbox" name="hasCertificate" checked={!!formData.hasCertificate} onChange={handleChange} />
                       <span className="text-sm">بله</span>
@@ -582,7 +586,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                   </motion.div>
                   <motion.div className="field sm:col-span-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
                     <label className="label">سوابق مهارتی</label>
-                    <textarea className={`${inputStyle} resize-none`} name="skillHistory" value={formData.skillHistory} onChange={handleChange} rows={3} placeholder="سوابق مهارتی و رشته های مورد علاقه خود را وارد کنید..." />
+                    <textarea className={`${inputStyle} resize-none`} name="skillHistory" value={formData.skillHistory} onChange={handleChange} rows={3} placeholder="سوابق مهارتی و رشته های مورد علاقه خود را با توضیحات کامل وارد کنید...(چه مهارتی دارید؟)" />
                   </motion.div>
                   <motion.div className="field" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
                     <label className="label">وضعیت تأهل</label>
