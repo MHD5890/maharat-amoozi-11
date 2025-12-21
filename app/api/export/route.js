@@ -96,7 +96,7 @@ export async function GET(request) {
                     dateStr = '';
                 }
                 if (date && !isNaN(date.getTime())) {
-                    dateStr = date.toLocaleDateString('en-US');
+                    dateStr = date.toLocaleDateString('fa-IR');
                 }
             }
             return {

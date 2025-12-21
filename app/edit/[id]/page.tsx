@@ -150,7 +150,7 @@ export default function EditPage() {
                     </div>
                     <div className="field">
                         <label className="label">رشته تحصیلی</label>
-                        <input className="w-full border-2 border-gray-300 rounded-xl py-3 px-4 outline-none bg-white text-sm transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20" name="fieldOfStudy" value={formData.fieldOfStudy || ''} onChange={handleChange} />
+                        <input className="w-full border-2 border-gray-300 rounded-xl py-3 px-4 outline-none bg-white text-sm transition-all duration-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20" name="fieldOfStudy" value={formData.fieldOfStudy || ''} onChange={handleChange} required />
                     </div>
                     <div className="field">
                         <label className="label">محل خدمت</label>

@@ -120,6 +120,12 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
   const [trackingNationalId, setTrackingNationalId] = useState<string>('');
   const [trackingResult, setTrackingResult] = useState<any>(null);
   const [trackingMessage, setTrackingMessage] = useState<string>('');
+  const [certificateNationalId, setCertificateNationalId] = useState<string>('');
+  const [certificateResult, setCertificateResult] = useState<string>('');
+  const [certificateMessage, setCertificateMessage] = useState<string>('');
+  const [resultsNationalId, setResultsNationalId] = useState<string>('');
+  const [resultsResult, setResultsResult] = useState<any>(null);
+  const [resultsMessage, setResultsMessage] = useState<string>('');
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [mehtaSkills, setMehtaSkills] = useState<string[]>([]);
   const [regularSkills, setRegularSkills] = useState<string[]>([]);
@@ -151,7 +157,9 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
       const personSkills = [initialData.skill1, initialData.skill2, initialData.skill3].filter((s): s is string => s !== undefined && !skills.includes(s));
       skills = [...skills, ...personSkills];
     }
-    setAvailableSkills(skills);
+    // Ensure unique skills to avoid duplicate keys in React
+    const uniqueSkills = [...new Set(skills)];
+    setAvailableSkills(uniqueSkills);
   }, [formData.isMehtaPlan, mehtaSkills, regularSkills, isEditMode, initialData]);
 
   useEffect(() => {
@@ -314,6 +322,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
         formDataToSend.append('phone', finalData.phone || '');
         formDataToSend.append('city', finalData.address || '');
         formDataToSend.append('education', finalData.degree || '');
+        formDataToSend.append('fieldOfStudy', finalData.fieldOfStudy || '');
         formDataToSend.append('maritalStatus', finalData.marital || '');
         formDataToSend.append('skill1', finalData.skill1 || '');
         formDataToSend.append('skill2', finalData.skill2 || '');
@@ -533,7 +542,7 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                   </motion.div>
                   <motion.div className="field" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
                     <label className="label">رشته تحصیلی</label>
-                    <input className={inputStyle} name="fieldOfStudy" value={formData.fieldOfStudy} onChange={handleChange} placeholder="رشته تحصیلی خود را وارد کنید" />
+                    <input className={inputStyle} name="fieldOfStudy" value={formData.fieldOfStudy} onChange={handleChange} placeholder="رشته تحصیلی خود را وارد کنید" required />
                   </motion.div>
                   <motion.div className="field sm:col-span-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
                     <label className="label">آیا دارای گواهی (فنی حرفه ای و غیره ...) یا دیپلم کار و دانش هستید؟</label>
@@ -572,11 +581,11 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                         {availableSkills.map(skill => <option key={skill} value={skill}>{skill}</option>)}
                       </select>
                       <select className={inputStyle} name="skill2" value={formData.skill2} onChange={handleChange}>
-                        <option value="">اولویت ۲ (اختیاری)</option>
+                        <option value="">اولویت ۲</option>
                         {availableSkills.map(skill => <option key={skill} value={skill}>{skill}</option>)}
                       </select>
                       <select className={inputStyle} name="skill3" value={formData.skill3} onChange={handleChange}>
-                        <option value="">اولویت ۳ (اختیاری)</option>
+                        <option value="">اولویت ۳</option>
                         {availableSkills.map(skill => <option key={skill} value={skill}>{skill}</option>)}
                       </select>
                     </div>
@@ -597,8 +606,8 @@ const RegisterForm = ({ onNavigate, onSave, initialData, isEditMode }: RegisterF
                     )}
                   </motion.div>
                   <motion.div className="field sm:col-span-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
-                    <label className="label">سوابق مهارتی</label>
-                    <textarea className={`${inputStyle} resize-none`} name="skillHistory" value={formData.skillHistory} onChange={handleChange} rows={3} placeholder="سوابق مهارتی و رشته های مورد علاقه خود را با توضیحات کامل وارد کنید...(چه مهارتی دارید؟)" />
+                    <label className="label">سوابق مهارتی(جهت معرفی به بازار کار)</label>
+                    <textarea className={`${inputStyle} resize-none`} name="skillHistory" value={formData.skillHistory} onChange={handleChange} rows={3} placeholder="در چه زمینه ای تخصص دارید؟چه مدت است مشغول به آن هستید؟ در چه حد حرفه ای هستید؟(کامل توضیح دهید)" />
                   </motion.div>
                   <motion.div className="field" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
                     <label className="label">وضعیت تأهل</label>
@@ -960,6 +969,7 @@ export default function Page() {
                 phone: p.phone,
                 address: p.city,
                 degree: p.education,
+                fieldOfStudy: p.fieldOfStudy || '',
                 skill1: p.skill1 || p.skillField || '',
                 skill2: p.skill2 || '',
                 skill3: p.skill3 || '',
