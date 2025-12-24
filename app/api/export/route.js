@@ -1,73 +1,115 @@
 import dbConnect from '@/lib/dbConnect';
 import Person from '@/models/Person';
+import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import archiver from 'archiver';
-import { checkAdmin } from '@/lib/checkAdmin'; // افزودن چک ادمین
+import { checkAdmin } from '@/lib/checkAdmin';
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function convertPersianToEnglishDigits(str) {
+    if (!str) return str;
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    const englishDigits = '0123456789';
+    return str.replace(/[۰-۹]/g, (char) => englishDigits[persianDigits.indexOf(char)]);
+}
 
 export async function GET(request) {
     try {
-        const notAllowed = checkAdmin(request);  // چک ادمین
-        if (notAllowed) return notAllowed;
+        const notAllowed = checkAdmin(request);
+        if (notAllowed) {
+            return notAllowed;
+        }
 
         await dbConnect();
         const url = new URL(request.url);
         const type = url.searchParams.get('type'); // 'zip' for photos
-        const month = url.searchParams.get('month'); // '07'
-        const year = url.searchParams.get('year'); // '1403'
         const skill = url.searchParams.get('skill')?.trim();
-        const filter = url.searchParams.get('filter')?.trim(); // 'mehta' for mehta plan
+        const filter = url.searchParams.get('filter')?.trim(); // 'mehta'
         const tab = url.searchParams.get('tab')?.trim(); // 'persons', 'exam', 'mehta'
 
-        if (type === 'zip') {
-            // export photos as zip
-            const queryFilter = { photo: { $exists: true, $ne: null } };
-            if (skill) queryFilter.skillField = new RegExp(`^${skill}$`, 'i');
-            if (month && year) {
-                const regex = new RegExp(`^${year}\\/0?${parseInt(month, 10)}$`);
-                queryFilter.dispatchDate = { $regex: regex };
-            }
-            if (filter === 'mehta') queryFilter.isMehtaPlan = true;
-            if (tab === 'exam') queryFilter.status = { $in: ['معرفی به آزمون شده', 'ثبت نام شده'] };
-            if (tab === 'mehta') queryFilter.isMehtaPlan = true;
-            const persons = await Person.find(queryFilter).select('nationalId photo').sort({ createdAt: 1 });
-
-            const archive = archiver('zip', { zlib: { level: 9 } });
-            const chunks = [];
-            archive.on('data', (chunk) => chunks.push(chunk));
-            archive.on('end', () => { });
-
-            for (const person of persons) {
-                if (person.photo) {
-                    archive.append(person.photo, { name: `${person.nationalId}.jpg` });
-                }
-            }
-            await archive.finalize();
-
-            const buffer = Buffer.concat(chunks);
-            const sanitizedFilename = skill ? skill.replace(/\s+/g, '_').replace(/[\/\\?*\[\]:'"]/g, '_').substring(0, 100) : 'photos';
-            return new NextResponse(buffer, {
-                status: 200,
-                headers: {
-                    'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(sanitizedFilename)}.zip`,
-                    'Content-Type': 'application/zip',
-                },
-            });
-        }
-
         const queryFilter = {};
-        if (skill) queryFilter.skillField = new RegExp(`^${skill}$`, 'i');
-        if (month && year) {
-            // dispatchDate stored as 'YYYY/MM' or similar; match prefix
-            const regex = new RegExp(`^${year}\\/0?${parseInt(month, 10)}$`);
-            queryFilter.dispatchDate = { $regex: regex };
-        }
-        if (filter === 'mehta') queryFilter.isMehtaPlan = true;
-        if (tab === 'exam') queryFilter.status = { $in: ['معرفی به آزمون شده', 'ثبت نام شده'] };
-        if (tab === 'mehta') queryFilter.isMehtaPlan = true;
-        const persons = await Person.find(queryFilter).sort({ createdAt: 1 }).lean();
+        if (skill) queryFilter.skillField = new RegExp(`^${escapeRegex(skill)}$`, 'i');
 
-        // نقشه‌برداری اعداد محل خدمت به نام‌ها
+        if (tab === 'mehta' || filter === 'mehta') {
+            queryFilter.isMehtaPlan = true;
+        } else if (tab === 'persons') {
+            queryFilter.isMehtaPlan = { $ne: true };
+        } else if (tab === 'exam') {
+            queryFilter.status = { $in: ['معرفی به آزمون شده', 'ثبت نام شده'] };
+        }
+
+        if (type === 'zip') {
+            try {
+                queryFilter.photo = { $exists: true, $ne: null };
+                // Using lean() and selecting only needed fields for performance
+                const persons = await Person.find(queryFilter).select('nationalId photo');
+
+                if (persons.length === 0) {
+                    return NextResponse.json({ success: false, message: 'هیچ عکسی برای خروجی یافت نشد' }, { status: 404 });
+                }
+
+                const archive = archiver('zip', { zlib: { level: 5 } }); // Faster compression
+
+                const buffer = await new Promise((resolve, reject) => {
+                    const chunks = [];
+                    archive.on('data', (chunk) => chunks.push(chunk));
+                    archive.on('end', () => resolve(Buffer.concat(chunks)));
+                    archive.on('error', reject);
+
+                    let photoCount = 0;
+                    for (const person of persons) {
+                        if (person.photo) {
+                            console.log(`Photo for ${person.nationalId}:`, typeof person.photo, person.photo.constructor?.name, person.photo.length);
+                            // Use the same logic as the working test script
+                            const photoData = person.photo.buffer || person.photo;
+
+                            if (Buffer.isBuffer(photoData) && photoData.length > 0) {
+                                archive.append(photoData, { name: `${person.nationalId}.jpg` });
+                                photoCount++;
+                            } else {
+                                console.log(`Invalid photo for ${person.nationalId}:`, typeof photoData, photoData?.length);
+                            }
+                        } else {
+                            console.log(`No photo for ${person.nationalId}`);
+                        }
+                    }
+                    console.log(`Total photos processed: ${photoCount} out of ${persons.length}`);
+                    archive.finalize();
+                });
+
+                const sanitizedFilename = skill ? skill.replace(/\s+/g, '_').replace(/[\/\\?*\[\]:'"]/g, '_').substring(0, 100) : 'photos';
+                return new NextResponse(buffer, {
+                    status: 200,
+                    headers: {
+                        'Content-Disposition': `attachment; filename="${encodeURIComponent(sanitizedFilename)}.zip"`,
+                        'Content-Type': 'application/zip',
+                    },
+                });
+            } catch (err) {
+                console.error('ZIP export error:', err);
+                return NextResponse.json({ success: false, message: 'خطا در تولید فایل زیپ', error: err?.message || String(err) }, { status: 500 });
+            }
+        }
+
+        // Export Excel - Use aggregation to check photo existence without loading photo data
+        const persons = await Person.aggregate([
+            { $match: queryFilter },
+            {
+                $addFields: {
+                    photoExists: { $cond: { if: { $and: [{ $ne: ["$photo", null] }, { $gt: [{ $binarySize: "$photo" }, 0] }] }, then: true, else: false } }
+                }
+            },
+            { $project: { photo: 0 } } // exclude photo to save memory
+        ]);
+
+        if (persons.length === 0) {
+            return NextResponse.json({ success: false, message: 'هیچ رکوردی برای خروجی یافت نشد' }, { status: 404 });
+        }
+
         const locationMap = {
             "1": "کارت سبز ( تکمیلی )",
             "2": "آموزش سپاه ثارالله",
@@ -83,66 +125,47 @@ export async function GET(request) {
             "12": "خانواده کارکنان",
         };
 
-        // تبدیل داده‌ها به فرمت مناسب برای اکسل
-        const dataForExcel = persons.map((p, index) => {
-            let dateStr = '';
-            if (p.createdAt) {
-                let date;
-                if (typeof p.createdAt === 'string') {
-                    date = new Date(p.createdAt);
-                } else if (p.createdAt instanceof Date) {
-                    date = p.createdAt;
-                } else {
-                    dateStr = '';
-                }
-                if (date && !isNaN(date.getTime())) {
-                    dateStr = date.toLocaleDateString('fa-IR');
-                }
-            }
-            return {
-                'ردیف': index + 1,
-                'نام': p.firstName || '',
-                'نام خانوادگی': p.lastName || '',
-                'نام پدر': p.fatherName || '',
-                'کد ملی': p.nationalId || '',
-                'تاریخ تولد': p.birthDate || '',
-                'شماره تماس': p.phone || '',
-                'تحصیلات': p.education || '',
-                'رشته تحصیلی': p.fieldOfStudy || '',
-                'محل سکونت': p.city || '',
-                'محل خدمت': locationMap[p.placeOfService] || p.placeOfService || '',
-                'رشته مهارت آموزی': p.skillField || '',
-                'اولویت ۲': p.skill2 || '',
-                'اولویت ۳': p.skill3 || '',
-                'سوابق مهارتی': p.skillHistory || '',
-                'وضعیت تاهل': p.maritalStatus || '',
-                'درخواست خوابگاه': p.requestDormitory ? '*' : '',
-                'طرح مهتا': p.isMehtaPlan ? '*' : '',
-                'ماه و سال پایان خدمت': p.serviceEndMonth && p.serviceEndYear ? `${p.serviceEndMonth}/${p.serviceEndYear}` : '',
-                'دارای گواهی فنی حرفه ای': p.hasCertificate ? '*' : '',
-                'نام گواهی': p.certificateName || '',
-                'تاریخ ثبت نام': dateStr,
-                'تاریخ اعزام': p.dispatchDate || '',
-                'وضعیت': p.status || '',
-                'تاریخ آزمون': p.examDate || '',
-                'عکس': p.photo ? 'دارد' : 'ندارد',
-            };
-        });
+        const dataForExcel = persons.map((p, index) => ({
+            'ردیف': index + 1,
+            'نام': p.firstName || '',
+            'نام خانوادگی': p.lastName || '',
+            'نام پدر': p.fatherName || '',
+            'کد ملی': convertPersianToEnglishDigits(p.nationalId || ''),
+            'تاریخ تولد': convertPersianToEnglishDigits(p.birthDate || ''),
+            'شماره تماس': convertPersianToEnglishDigits(p.phone || ''),
+            'تحصیلات': p.education || '',
+            'رشته تحصیلی': p.fieldOfStudy || '',
+            'محل سکونت': p.city || '',
+            'محل خدمت': locationMap[p.placeOfService] || p.placeOfService || '',
+            'رشته مهارت آموزی': p.skillField || '',
+            'اولویت ۲': p.skill2 || '',
+            'اولویت ۳': p.skill3 || '',
+            'سوابق مهارتی': p.skillHistory || '',
+            'وضعیت تاهل': p.maritalStatus || '',
+            'درخواست خوابگاه': p.requestDormitory ? '*' : '',
+            'طرح مهتا': p.isMehtaPlan ? '*' : '',
+            'ماه و سال پایان خدمت': `${p.serviceEndYear || ''}/${p.serviceEndMonth || ''}`.trim(),
+            'تاریخ ثبت نام': convertPersianToEnglishDigits(p.registrationDate || ''),
+            'تاریخ اعزام': convertPersianToEnglishDigits(p.dispatchDate || ''),
+            'وضعیت': p.status || '',
+            'تاریخ آزمون': convertPersianToEnglishDigits(p.examDate || ''),
+            'عکس': p.photoExists ? '*' : '',
+            'دارای گواهی فنی حرفه ای': p.hasCertificate ? '*' : '',
+            'نام گواهی': p.certificateName || '',
+        }));
 
-        const headers = ['ردیف', 'نام', 'نام خانوادگی', 'نام پدر', 'کد ملی', 'تاریخ تولد', 'شماره تماس', 'تحصیلات', 'رشته تحصیلی', 'محل سکونت', 'محل خدمت', 'رشته مهارت آموزی', 'اولویت ۲', 'اولویت ۳', 'سوابق مهارتی', 'وضعیت تاهل', 'درخواست خوابگاه', 'طرح مهتا', 'ماه و سال پایان خدمت', 'تاریخ ثبت نام', 'تاریخ اعزام', 'وضعیت', 'تاریخ آزمون', 'عکس'];
-        const worksheet = XLSX.utils.json_to_sheet(dataForExcel, { header: headers });
+        const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
         const workbook = XLSX.utils.book_new();
-        const sheetName = 'Data';
-        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
 
-        // ایجاد بافر از فایل اکسل (به عنوان Buffer برای ارسال باینری)
         const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+        const uint8 = new Uint8Array(buffer);
 
-        const sanitizedFilename = skill ? skill.replace(/\s+/g, '_').replace(/[\/\\?*\[\]:'"]/g, '_').substring(0, 100) : 'registered_users';
-        return new NextResponse(buffer, {
+        const sanitizedFilename = skill ? skill.replace(/\s+/g, '_').replace(/[\/\\?*\[\]:'"]/g, '_').substring(0, 100) : 'persons';
+        return new NextResponse(uint8, {
             status: 200,
             headers: {
-                'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(sanitizedFilename)}.xlsx`,
+                'Content-Disposition': `attachment; filename="${encodeURIComponent(sanitizedFilename)}.xlsx"`,
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             },
         });

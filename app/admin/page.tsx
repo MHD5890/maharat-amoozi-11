@@ -597,32 +597,90 @@ export default function AdminPage() {
   };
 
   const exportExcel = async (skill?: string, tab?: string) => {
+    console.log('exportExcel called with skill:', skill, 'tab:', tab);
     setExportingExcel(true);
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
+      console.log('Admin pass from sessionStorage:', adminPass);
       const params = new URLSearchParams();
-      if (skill) params.set('skill', skill);
-      if (tab) params.set('tab', tab);
       params.set('pass', adminPass);
-      const res = await fetch(`/api/export?${params.toString()}`);
-      if (!res.ok) { const body = await res.json().catch(() => ({})); setStatusMessage(body.message || `خطا (${res.status})`); return; }
-      const blob = await res.blob(); const u = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = `${skill ? skill.replace(/\s+/g, '_') + '_' : ''}${tab ? tab + '_' : ''}persons.xlsx`; a.click();
-    } catch (e: any) { setStatusMessage(e?.message || 'خطا در تولید اکسل'); }
+      let url = '';
+      if (tab === 'exam') {
+        url = `/api/export/examintro?${params.toString()}`;
+      } else {
+        if (skill) params.set('skill', skill);
+        if (tab === 'mehta') params.set('filter', 'mehta');
+        if (tab === 'persons' && selectedSkillFilter) params.set('skill', selectedSkillFilter);
+        if (tab === 'mehta' && selectedMehtaSkillFilter) params.set('skill', selectedMehtaSkillFilter);
+        url = `/api/export?${params.toString()}`;
+      }
+      console.log('Export URL:', url);
+      console.log('Starting fetch for Excel...');
+      const res = await fetch(url);
+      console.log('Fetch completed, res.status:', res.status, 'res.ok:', res.ok);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.log('Error response body:', body);
+        setStatusMessage(body.message || `خطا (${res.status})`);
+        return;
+      }
+      console.log('Response OK, creating blob...');
+      const blob = await res.blob();
+      console.log('Blob created, size:', blob.size);
+      if (blob.size === 0) {
+        console.log('Blob size is 0, no download');
+        setStatusMessage('فایل خالی است یا خطا در تولید');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      const sanitizedFilename = skill ? skill.replace(/\s+/g, '_').replace(/[\/\\?*\[\]:'"]/g, '_').substring(0, 100) : 'export';
+      a.download = `${sanitizedFilename}.xlsx`;
+      console.log('Triggering download with filename:', a.download);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(a.href);
+      console.log('Download triggered');
+    } catch (e: any) {
+      console.log('Export error:', e);
+      setStatusMessage(e?.message || 'خطا در تولید اکسل');
+    }
     finally { setExportingExcel(false); }
   };
 
   const exportPhotosZip = async (skill?: string) => {
+    console.log('exportPhotosZip called with skill:', skill);
     setExportingZip(true);
     try {
       const adminPass = sessionStorage.getItem('admin_pass') || '';
+      console.log('Admin pass for ZIP export:', adminPass);
       const params = new URLSearchParams();
       params.set('type', 'zip');
       if (skill) params.set('skill', skill);
       params.set('pass', adminPass);
-      const res = await fetch(`/api/export?${params.toString()}`);
-      if (!res.ok) { const body = await res.json().catch(() => ({})); setStatusMessage(body.message || `خطا (${res.status})`); return; }
-      const blob = await res.blob(); const u = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = `${skill ? skill.replace(/\s+/g, '_') + '_' : ''}photos.zip`; a.click();
-    } catch (e: any) { setStatusMessage(e?.message || 'خطا در تولید زیپ عکس‌ها'); }
+      const url = `/api/export?${params.toString()}`;
+      console.log('ZIP export URL:', url);
+      const res = await fetch(url);
+      console.log('ZIP response status:', res.status);
+      if (!res.ok) { const body = await res.json().catch(() => ({})); console.log('ZIP response body:', body); setStatusMessage(body.message || `خطا (${res.status})`); return; }
+      const blob = await res.blob();
+      console.log('ZIP blob size:', blob.size);
+      if (!blob || blob.size === 0) {
+        setStatusMessage('فایل زیپ خالی است یا خطا در تولید رخ داده است');
+        return;
+      }
+
+      const u = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = `${skill ? skill.replace(/\s+/g, '_') + '_' : ''}photos.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(u);
+      console.log('ZIP download triggered');
+    } catch (e: any) { console.log('ZIP export error:', e); setStatusMessage(e?.message || 'خطا در تولید زیپ عکس‌ها'); }
     finally { setExportingZip(false); }
   };
 
@@ -718,7 +776,7 @@ export default function AdminPage() {
           </div>
           <motion.button
             className="bg-emerald-500 text-white px-4 py-2 rounded-md flex items-center gap-2"
-            onClick={() => exportExcel()}
+            onClick={() => exportExcel(undefined, activeTab)}
             disabled={exportingExcel}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
