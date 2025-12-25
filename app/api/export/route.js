@@ -33,30 +33,33 @@ export async function GET(request) {
         const filter = url.searchParams.get('filter')?.trim(); // 'mehta'
         const tab = url.searchParams.get('tab')?.trim(); // 'persons', 'exam', 'mehta'
 
-        const queryFilter = {};
-        if (skill) queryFilter.skillField = new RegExp(`^${escapeRegex(skill)}$`, 'i');
+        let queryFilter = {};
+        if (type !== 'zip') {
+            if (skill) queryFilter.skillField = new RegExp(`^${escapeRegex(skill)}$`, 'i');
 
-        if (tab === 'mehta' || filter === 'mehta') {
-            queryFilter.isMehtaPlan = true;
-        } else if (tab === 'persons') {
-            queryFilter.isMehtaPlan = { $ne: true };
-        } else if (tab === 'exam') {
-            queryFilter.status = { $in: ['معرفی به آزمون شده', 'ثبت نام شده'] };
+            if (tab === 'mehta' || filter === 'mehta') {
+                queryFilter.isMehtaPlan = true;
+            } else if (tab === 'persons') {
+                queryFilter.isMehtaPlan = { $ne: true };
+            } else if (tab === 'exam') {
+                queryFilter.status = { $in: ['معرفی به آزمون شده', 'ثبت نام شده'] };
+            }
         }
 
         if (type === 'zip') {
             console.log('ZIP export called with queryFilter:', queryFilter);
             console.time('ZIP Export Duration');
             try {
-                const persons = await Person.find({ ...queryFilter, photo: { $exists: true, $ne: null } }).select('nationalId photo');
+                // First, count how many persons have photos
+                const photoCount = await Person.countDocuments({ ...queryFilter, photo: { $exists: true, $ne: null } });
 
-                console.log('Found persons with photos:', persons.length);
-                if (persons.length === 0) {
+                console.log('Found persons with photos:', photoCount);
+                if (photoCount === 0) {
                     console.log('No persons with photo found');
                     return NextResponse.json({ success: false, message: 'هیچ عکسی برای خروجی یافت نشد' }, { status: 404 });
                 }
 
-                // Create zip archive
+                // Create zip archive with streaming response
                 console.log('Starting archive creation');
                 const archive = archiver('zip', { zlib: { level: 5 } });
 
@@ -69,60 +72,64 @@ export async function GET(request) {
                     throw err;
                 });
 
-                let photoCount = 0;
-                for (const person of persons) {
-                    if (!person.photo) continue;
+                // Use cursor to process documents in batches to avoid loading all photos into memory
+                const cursor = Person.find({ ...queryFilter, photo: { $exists: true, $ne: null } })
+                    .select('nationalId photo')
+                    .cursor({ batchSize: 10 }); // Process in small batches
 
+                let processedCount = 0;
+                let addedCount = 0;
+
+                cursor.on('data', (person) => {
+                    processedCount++;
                     if (person.photo && Buffer.isBuffer(person.photo) && person.photo.length > 0) {
                         try {
-                            console.log('Adding photo for', person.nationalId, 'size:', person.photo.length);
                             archive.append(person.photo, { name: `${person.nationalId}.jpg` });
-                            photoCount++;
+                            addedCount++;
                         } catch (e) {
                             console.log('Error appending photo for', person.nationalId, e);
                         }
                     }
-                }
-
-                if (photoCount === 0) {
-                    return NextResponse.json({ success: false, message: 'هیچ عکسی برای خروجی یافت نشد' }, { status: 404 });
-                }
-
-                // Collect archive data using events
-                const chunks = [];
-
-                archive.on('data', (chunk) => {
-                    chunks.push(chunk);
                 });
 
-                // Finalize and wait for completion
-                await new Promise((resolve, reject) => {
-                    archive.on('end', () => {
-                        console.log('Archive finalized successfully');
-                        resolve();
-                    });
-                    archive.on('error', reject);
+                cursor.on('end', () => {
+                    console.log(`Processed ${processedCount} persons, added ${addedCount} photos to archive`);
                     archive.finalize();
                 });
 
-                // Combine chunks into buffer
-                const zipBuffer = Buffer.concat(chunks);
-                console.log('Zip buffer created, size:', zipBuffer.length);
+                cursor.on('error', (err) => {
+                    console.error('Cursor error:', err);
+                    archive.emit('error', err);
+                });
+
+                // Stream the response directly instead of buffering
+                const { readable, writable } = new TransformStream();
+                const writer = writable.getWriter();
+
+                archive.on('data', (chunk) => {
+                    writer.write(chunk);
+                });
+
+                archive.on('end', () => {
+                    writer.close();
+                });
+
+                archive.on('error', (err) => {
+                    console.error('Archive error:', err);
+                    writer.abort(err);
+                });
+
                 console.timeEnd('ZIP Export Duration');
 
-                if (!zipBuffer || zipBuffer.length === 0) {
-                    return NextResponse.json({ success: false, message: 'خطا در تولید فایل زیپ - بافر خالی' }, { status: 500 });
-                }
-
-                return new NextResponse(zipBuffer, {
+                return new NextResponse(readable, {
                     status: 200,
                     headers: {
                         'Content-Disposition': `attachment; filename="photos.zip"`,
                         'Content-Type': 'application/zip',
-                        'Content-Length': zipBuffer.length,
                         'Access-Control-Allow-Origin': '*',
                         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                        'Transfer-Encoding': 'chunked', // Enable chunked transfer
                     },
                 });
             } catch (err) {
