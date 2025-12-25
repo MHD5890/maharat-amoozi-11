@@ -46,6 +46,7 @@ export async function GET(request) {
 
         if (type === 'zip') {
             console.log('ZIP export called with queryFilter:', queryFilter);
+            console.time('ZIP Export Duration');
             try {
                 const persons = await Person.find({ ...queryFilter, photo: { $exists: true, $ne: null } }).select('nationalId photo');
 
@@ -107,6 +108,7 @@ export async function GET(request) {
                 // Combine chunks into buffer
                 const zipBuffer = Buffer.concat(chunks);
                 console.log('Zip buffer created, size:', zipBuffer.length);
+                console.timeEnd('ZIP Export Duration');
 
                 if (!zipBuffer || zipBuffer.length === 0) {
                     return NextResponse.json({ success: false, message: 'خطا در تولید فایل زیپ - بافر خالی' }, { status: 500 });
