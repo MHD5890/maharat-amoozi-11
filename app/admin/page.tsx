@@ -625,7 +625,8 @@ export default function AdminPage() {
         return;
       }
       console.log('Response OK, creating blob...');
-      const blob = await res.blob();
+      const arrayBuffer = await res.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       console.log('Blob created, size:', blob.size);
       if (blob.size === 0) {
         console.log('Blob size is 0, no download');
@@ -658,30 +659,52 @@ export default function AdminPage() {
       const params = new URLSearchParams();
       params.set('type', 'zip');
       if (skill) params.set('skill', skill);
+      params.set('tab', activeTab);
       params.set('pass', adminPass);
       const url = `/api/export?${params.toString()}`;
       console.log('ZIP export URL:', url);
-      const res = await fetch(url);
-      console.log('ZIP response status:', res.status);
-      if (!res.ok) { const body = await res.json().catch(() => ({})); console.log('ZIP response body:', body); setStatusMessage(body.message || `خطا (${res.status})`); return; }
-      const blob = await res.blob();
-      console.log('ZIP blob size:', blob.size);
-      if (!blob || blob.size === 0) {
-        setStatusMessage('فایل زیپ خالی است یا خطا در تولید رخ داده است');
-        return;
+      try {
+        console.log('About to fetch ZIP');
+        const response = await fetch(url);
+        console.log('ZIP response status:', response.status);
+        if (!response.ok) {
+          const text = await response.text();
+          console.log('ZIP response text:', text);
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        const blob = await response.blob();
+        console.log('ZIP blob size:', blob.size);
+        if (blob.size === 0) {
+          console.log('Blob size is 0, no download');
+          toast.error('فایل زیپ خالی است یا خطا در تولید');
+          setStatusMessage('فایل زیپ خالی است یا خطا در تولید');
+          return;
+        }
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = 'photos.zip';
+        console.log('Triggering ZIP download with filename:', a.download);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(a.href);
+        console.log('ZIP download triggered');
+        toast.success('فایل زیپ عکس‌ها دانلود شد');
+      } catch (e: any) {
+        console.log('ZIP export error:', e);
+        toast.error('خطا در دانلود فایل زیپ: ' + e.message);
+        setStatusMessage('خطا در دانلود فایل زیپ: ' + e.message);
+      } finally {
+        setExportingZip(false);
       }
-
-      const u = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = u;
-      a.download = `${skill ? skill.replace(/\s+/g, '_') + '_' : ''}photos.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(u);
-      console.log('ZIP download triggered');
-    } catch (e: any) { console.log('ZIP export error:', e); setStatusMessage(e?.message || 'خطا در تولید زیپ عکس‌ها'); }
-    finally { setExportingZip(false); }
+    } catch (e: any) {
+      console.log('ZIP export error:', e);
+      alert('Error: ' + e.message);
+      toast.error(e?.message || 'خطا در تولید زیپ عکس‌ها');
+      setStatusMessage(e?.message || 'خطا در تولید زیپ عکس‌ها');
+    } finally {
+      setExportingZip(false);
+    }
   };
 
   const testDb = async () => {

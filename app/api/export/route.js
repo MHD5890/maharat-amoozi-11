@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import archiver from 'archiver';
 import { checkAdmin } from '@/lib/checkAdmin';
 
+
 function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -18,6 +19,7 @@ function convertPersianToEnglishDigits(str) {
 }
 
 export async function GET(request) {
+    console.log('Export API called');
     try {
         const notAllowed = checkAdmin(request);
         if (notAllowed) {
@@ -43,50 +45,82 @@ export async function GET(request) {
         }
 
         if (type === 'zip') {
+            console.log('ZIP export called with queryFilter:', queryFilter);
             try {
-                queryFilter.photo = { $exists: true, $ne: null };
-                // Using lean() and selecting only needed fields for performance
-                const persons = await Person.find(queryFilter).select('nationalId photo');
+                const persons = await Person.find({ ...queryFilter, photo: { $exists: true, $ne: null } }).select('nationalId photo');
 
+                console.log('Found persons with photos:', persons.length);
                 if (persons.length === 0) {
+                    console.log('No persons with photo found');
                     return NextResponse.json({ success: false, message: 'هیچ عکسی برای خروجی یافت نشد' }, { status: 404 });
                 }
 
-                const archive = archiver('zip', { zlib: { level: 5 } }); // Faster compression
+                // Create zip archive
+                console.log('Starting archive creation');
+                const archive = archiver('zip', { zlib: { level: 5 } });
 
-                const buffer = await new Promise((resolve, reject) => {
-                    const chunks = [];
-                    archive.on('data', (chunk) => chunks.push(chunk));
-                    archive.on('end', () => resolve(Buffer.concat(chunks)));
-                    archive.on('error', reject);
+                archive.on('warning', (err) => {
+                    console.warn('ZIP export warning:', err);
+                });
 
-                    let photoCount = 0;
-                    for (const person of persons) {
-                        if (person.photo) {
-                            console.log(`Photo for ${person.nationalId}:`, typeof person.photo, person.photo.constructor?.name, person.photo.length);
-                            // Use the same logic as the working test script
-                            const photoData = person.photo.buffer || person.photo;
+                archive.on('error', (err) => {
+                    console.error('ZIP export error:', err);
+                    throw err;
+                });
 
-                            if (Buffer.isBuffer(photoData) && photoData.length > 0) {
-                                archive.append(photoData, { name: `${person.nationalId}.jpg` });
-                                photoCount++;
-                            } else {
-                                console.log(`Invalid photo for ${person.nationalId}:`, typeof photoData, photoData?.length);
-                            }
-                        } else {
-                            console.log(`No photo for ${person.nationalId}`);
+                let photoCount = 0;
+                for (const person of persons) {
+                    if (!person.photo) continue;
+
+                    if (person.photo && Buffer.isBuffer(person.photo) && person.photo.length > 0) {
+                        try {
+                            console.log('Adding photo for', person.nationalId, 'size:', person.photo.length);
+                            archive.append(person.photo, { name: `${person.nationalId}.jpg` });
+                            photoCount++;
+                        } catch (e) {
+                            console.log('Error appending photo for', person.nationalId, e);
                         }
                     }
-                    console.log(`Total photos processed: ${photoCount} out of ${persons.length}`);
+                }
+
+                if (photoCount === 0) {
+                    return NextResponse.json({ success: false, message: 'هیچ عکسی برای خروجی یافت نشد' }, { status: 404 });
+                }
+
+                // Collect archive data using events
+                const chunks = [];
+
+                archive.on('data', (chunk) => {
+                    chunks.push(chunk);
+                });
+
+                // Finalize and wait for completion
+                await new Promise((resolve, reject) => {
+                    archive.on('end', () => {
+                        console.log('Archive finalized successfully');
+                        resolve();
+                    });
+                    archive.on('error', reject);
                     archive.finalize();
                 });
 
-                const sanitizedFilename = skill ? skill.replace(/\s+/g, '_').replace(/[\/\\?*\[\]:'"]/g, '_').substring(0, 100) : 'photos';
-                return new NextResponse(buffer, {
+                // Combine chunks into buffer
+                const zipBuffer = Buffer.concat(chunks);
+                console.log('Zip buffer created, size:', zipBuffer.length);
+
+                if (!zipBuffer || zipBuffer.length === 0) {
+                    return NextResponse.json({ success: false, message: 'خطا در تولید فایل زیپ - بافر خالی' }, { status: 500 });
+                }
+
+                return new NextResponse(zipBuffer, {
                     status: 200,
                     headers: {
-                        'Content-Disposition': `attachment; filename="${encodeURIComponent(sanitizedFilename)}.zip"`,
+                        'Content-Disposition': `attachment; filename="photos.zip"`,
                         'Content-Type': 'application/zip',
+                        'Content-Length': zipBuffer.length,
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
                     },
                 });
             } catch (err) {
