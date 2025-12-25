@@ -809,7 +809,13 @@ export default function AdminPage() {
           </motion.button>
           <motion.button
             className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center gap-2"
-            onClick={() => exportPhotosZip()}
+            onClick={() => {
+              if (activeTab === 'mehta') {
+                exportPhotosZip(selectedMehtaSkillFilter);
+              } else {
+                exportPhotosZip();
+              }
+            }}
             disabled={exportingZip}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
